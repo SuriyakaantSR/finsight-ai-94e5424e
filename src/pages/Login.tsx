@@ -1,27 +1,21 @@
 import { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TrendingUp, ArrowLeft, Eye, EyeOff } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { login, isLoading } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const from = location.state?.from?.pathname || "/dashboard";
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = await login(email, password);
-    if (success) {
-      navigate(from, { replace: true });
-    }
+    setIsLoading(true);
+    // TODO: Implement actual authentication
+    setTimeout(() => setIsLoading(false), 1000);
   };
 
   return (
@@ -58,13 +52,6 @@ const Login = () => {
             </p>
           </div>
 
-          {/* Demo Credentials Notice */}
-          <div className="mb-6 p-3 rounded-lg bg-primary/5 border border-primary/20">
-            <p className="text-xs text-center text-muted-foreground">
-              <span className="font-medium text-primary">Demo Mode:</span> Create an account first, then login with those credentials
-            </p>
-          </div>
-
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
@@ -83,9 +70,12 @@ const Login = () => {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <span className="text-xs text-muted-foreground">
-                  Min. 6 characters
-                </span>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs text-primary hover:underline"
+                >
+                  Forgot password?
+                </Link>
               </div>
               <div className="relative">
                 <Input
@@ -95,7 +85,6 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={6}
                   className="h-11 pr-10"
                 />
                 <button
