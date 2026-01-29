@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   id: string;
@@ -9,21 +11,6 @@ interface Message {
   content: string;
   timestamp: Date;
 }
-
-const FINANCE_KEYWORDS = [
-  "stock", "share", "nse", "bse", "invest", "trading", "portfolio",
-  "dividend", "profit", "loss", "rsi", "macd", "ema", "sma", "analyze",
-  "analysis", "market", "equity", "bond", "mutual fund", "ipo", "pe ratio",
-  "eps", "revenue", "earnings", "balance sheet", "income statement",
-  "fundamentals", "technical", "chart", "trend", "support", "resistance",
-  "reliance", "tcs", "infosys", "infy", "hdfc", "icici", "sbi", "wipro",
-  "hcl", "bharti", "airtel", "tatasteel", "tata", "bajaj", "maruti", "hero"
-];
-
-const isFinanceRelated = (query: string): boolean => {
-  const lowerQuery = query.toLowerCase();
-  return FINANCE_KEYWORDS.some(keyword => lowerQuery.includes(keyword));
-};
 
 const AnalysisChat = () => {
   const [messages, setMessages] = useState<Message[]>([
@@ -37,6 +24,7 @@ const AnalysisChat = () => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -61,104 +49,51 @@ const AnalysisChat = () => {
     setInput("");
     setIsLoading(true);
 
-    // Check if query is finance-related
-    if (!isFinanceRelated(input)) {
-      setTimeout(() => {
-        const redirectMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: "I apologize, but I'm specifically designed to assist with **Indian stock market analysis** only.\n\nI can help you with:\n• Stock analysis (TCS, RELIANCE, INFY, etc.)\n• Technical indicators\n• Fundamental metrics\n• Market trends\n\nPlease ask a question related to NSE/BSE stocks, and I'll provide you with detailed educational insights.",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, redirectMessage]);
-        setIsLoading(false);
-      }, 800);
-      return;
-    }
+    try {
+      // Build conversation history (exclude welcome message)
+      const conversationHistory = messages
+        .filter(m => m.id !== "welcome")
+        .map(m => ({ role: m.role, content: m.content }));
 
-    // Simulate AI response for demo
-    setTimeout(() => {
-      const analysisResponse: Message = {
+      const { data, error } = await supabase.functions.invoke('financial-analysis', {
+        body: {
+          messages: [...conversationHistory, { role: "user", content: input.trim() }],
+          conversationHistory
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: generateDemoResponse(input),
+        content: data.content || "I couldn't process your request. Please try again.",
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, analysisResponse]);
+
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error("Analysis error:", error);
+      toast({
+        title: "Analysis Error",
+        description: "Failed to get analysis. Please try again.",
+        variant: "destructive",
+      });
+      
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "I'm experiencing technical difficulties. Please try again in a moment.\n\n*Tip: Make sure your question is about Indian stock market analysis.*",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
-  const generateDemoResponse = (query: string): string => {
-    const lowerQuery = query.toLowerCase();
-    
-    if (lowerQuery.includes("tcs")) {
-      return `## TCS (Tata Consultancy Services) Analysis
-
-### Technical Indicators (Last 5 Years)
-| Indicator | Value | Signal |
-|-----------|-------|--------|
-| RSI (14) | 58.3 | Neutral |
-| MACD | +12.5 | Bullish |
-| 50-Day SMA | ₹3,842 | Above |
-| 200-Day SMA | ₹3,654 | Above |
-
-### Fundamental Metrics
-- **P/E Ratio:** 28.4x (Industry avg: 26.2x)
-- **EPS (TTM):** ₹132.5
-- **Revenue Growth (YoY):** 8.2%
-- **ROE:** 47.8%
-
-### Historical Analysis
-TCS has shown consistent growth over the past 5 years with a CAGR of approximately 12.3%. The stock has maintained strong support levels around ₹3,200-3,400 range.
-
-**Confidence Score:** 72% (based on indicator agreement)
-
-*Disclaimer: This is educational analysis only, not investment advice.*`;
-    }
-
-    if (lowerQuery.includes("reliance")) {
-      return `## RELIANCE Industries Analysis
-
-### Technical Indicators
-| Indicator | Value | Signal |
-|-----------|-------|--------|
-| RSI (14) | 62.1 | Slightly Overbought |
-| MACD | +8.7 | Bullish |
-| 50-Day SMA | ₹2,856 | Above |
-| 200-Day SMA | ₹2,645 | Above |
-
-### Fundamental Metrics
-- **P/E Ratio:** 24.8x
-- **Revenue Growth (YoY):** 23.5%
-- **Debt/Equity:** 0.42
-- **ROE:** 8.9%
-
-### Key Observations
-Reliance has diversified into telecom (Jio) and retail, reducing oil & gas dependency. The stock shows strong momentum with institutional buying.
-
-**Confidence Score:** 68%
-
-*Disclaimer: Educational analysis only.*`;
-    }
-
-    return `## Stock Analysis Request Received
-
-I've noted your query: "${query}"
-
-### What I Can Analyze:
-1. **Technical Indicators** - RSI, MACD, Moving Averages, Support/Resistance
-2. **Fundamental Metrics** - P/E, EPS, Revenue, ROE/ROCE
-3. **Historical Performance** - 5-10 year trends, CAGR
-4. **Comparative Analysis** - Multi-stock comparison
-
-### To get detailed analysis:
-Please specify the stock symbol (e.g., TCS, RELIANCE, INFY) and the type of analysis you need.
-
-**Example:** "Analyze TCS technical indicators for last 3 years"
-
-*All insights are educational and based on historical data only.*`;
-  };
 
   return (
     <div className="flex flex-col h-[600px] glass-card rounded-xl overflow-hidden">
