@@ -1,10 +1,12 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TrendingUp, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 const Signup = () => {
   const [name, setName] = useState("");
@@ -13,13 +15,37 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { signUp, user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreed) return;
     setIsLoading(true);
-    // TODO: Implement actual authentication
-    setTimeout(() => setIsLoading(false), 1000);
+    
+    const { error } = await signUp(email, password, name);
+    
+    if (error) {
+      toast({
+        title: "Signup Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsLoading(false);
+    } else {
+      toast({
+        title: "Account Created!",
+        description: "Welcome to FinSight AI. You are now signed in.",
+      });
+      navigate("/dashboard");
+    }
   };
 
   return (
