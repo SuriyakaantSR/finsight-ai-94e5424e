@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Menu, X, LogOut, User } from "lucide-react";
+import { TrendingUp, Menu, X, LogOut, User, Settings } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -76,6 +76,12 @@ const Navbar = () => {
                       Dashboard
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile" className="cursor-pointer">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Profile Settings
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={signOut} className="cursor-pointer text-destructive">
                     <LogOut className="h-4 w-4 mr-2" />
@@ -130,19 +136,27 @@ const Navbar = () => {
                   </Button>
                 </Link>
               ))}
-              <div className="flex gap-2 pt-4 border-t border-border/50 mt-2">
+              <div className="flex flex-col gap-2 pt-4 border-t border-border/50 mt-2">
                 {user ? (
-                  <Button
-                    variant="outline"
-                    className="w-full text-destructive"
-                    onClick={() => {
-                      signOut();
-                      setIsMobileMenuOpen(false);
-                    }}
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Sign Out
-                  </Button>
+                  <>
+                    <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button variant="outline" className="w-full">
+                        <Settings className="h-4 w-4 mr-2" />
+                        Profile Settings
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="outline"
+                      className="w-full text-destructive"
+                      onClick={() => {
+                        signOut();
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </Button>
+                  </>
                 ) : (
                   <>
                     <Link to="/login" className="flex-1" onClick={() => setIsMobileMenuOpen(false)}>
