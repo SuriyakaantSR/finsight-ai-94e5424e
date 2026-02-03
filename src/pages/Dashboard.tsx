@@ -121,7 +121,7 @@ const Dashboard = () => {
               <div className="p-4 rounded-xl bg-card border border-border/50">
                 <div className="flex items-center gap-2 mb-2">
                   <Activity className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">Market Status</span>
+                  <span className="text-sm font-medium">Market Status This Section is Edited By VN-78 </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Clock className="h-3 w-3" />
