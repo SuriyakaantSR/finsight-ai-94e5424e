@@ -18,8 +18,7 @@ const Navbar = () => {
 
   const navLinks = [
     { href: "/", label: "Home" },
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/analysis", label: "Analysis" },
+    { href: "/chat", label: "Analysis" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -70,10 +69,10 @@ const Navbar = () => {
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuContent align="end" className="w-48 bg-popover">
                   <DropdownMenuItem asChild>
-                    <Link to="/dashboard" className="cursor-pointer">
-                      Dashboard
+                    <Link to="/chat" className="cursor-pointer">
+                      Analysis Chat
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
