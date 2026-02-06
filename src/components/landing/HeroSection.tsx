@@ -40,9 +40,9 @@ const HeroSection = () => {
                 <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            <Link to="/dashboard">
+            <Link to="/chat">
               <Button variant="hero-outline" size="xl">
-                View Demo
+                Try Demo
               </Button>
             </Link>
           </div>
