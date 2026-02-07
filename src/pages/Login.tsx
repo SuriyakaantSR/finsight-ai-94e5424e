@@ -19,7 +19,7 @@ const Login = () => {
 
   useEffect(() => {
     if (user) {
-      navigate("/dashboard");
+      navigate("/chat");
     }
   }, [user, navigate]);
 
@@ -41,7 +41,7 @@ const Login = () => {
         title: "Welcome back!",
         description: "You have successfully signed in.",
       });
-      navigate("/dashboard");
+      navigate("/chat");
     }
   };
 

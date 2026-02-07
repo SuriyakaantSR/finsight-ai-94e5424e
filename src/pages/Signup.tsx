@@ -22,7 +22,7 @@ const Signup = () => {
 
   useEffect(() => {
     if (user) {
-      navigate("/dashboard");
+      navigate("/chat");
     }
   }, [user, navigate]);
 
@@ -45,7 +45,7 @@ const Signup = () => {
         title: "Account Created!",
         description: "Welcome to FinSight AI. You are now signed in.",
       });
-      navigate("/dashboard");
+      navigate("/chat");
     }
   };
 
