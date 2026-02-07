@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Message } from "./ChatLayout";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import jsPDF from "jspdf";
 
 interface ChatMessagesProps {
   messages: Message[];
@@ -34,19 +35,106 @@ const ChatMessages = ({ messages, isLoading }: ChatMessagesProps) => {
   };
 
   const handleDownloadPDF = (content: string, messageId: string) => {
-    // Create a simple text file for now (PDF generation would need a library)
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `finsight-analysis-${messageId}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const pdf = new jsPDF();
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const margin = 20;
+    const maxWidth = pageWidth - margin * 2;
+    
+    // Add header
+    pdf.setFontSize(16);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("FinSight AI - Stock Analysis", margin, 20);
+    
+    // Add timestamp
+    pdf.setFontSize(10);
+    pdf.setFont("helvetica", "normal");
+    pdf.setTextColor(128, 128, 128);
+    pdf.text(`Generated: ${new Date().toLocaleString()}`, margin, 28);
+    
+    // Add disclaimer
+    pdf.setFontSize(8);
+    pdf.text("Educational analysis only. Not investment advice.", margin, 34);
+    
+    // Reset text color
+    pdf.setTextColor(0, 0, 0);
+    
+    // Process content
+    let yPosition = 45;
+    const lineHeight = 6;
+    
+    const lines = content.split("\n");
+    
+    lines.forEach((line) => {
+      // Check if we need a new page
+      if (yPosition > pdf.internal.pageSize.getHeight() - 20) {
+        pdf.addPage();
+        yPosition = 20;
+      }
+      
+      // Headers
+      if (line.startsWith("### ")) {
+        pdf.setFontSize(12);
+        pdf.setFont("helvetica", "bold");
+        const text = line.replace("### ", "");
+        pdf.text(text, margin, yPosition);
+        yPosition += lineHeight + 2;
+      } else if (line.startsWith("## ")) {
+        pdf.setFontSize(14);
+        pdf.setFont("helvetica", "bold");
+        const text = line.replace("## ", "");
+        pdf.text(text, margin, yPosition);
+        yPosition += lineHeight + 3;
+      } else if (line.startsWith("- ") || line.startsWith("• ")) {
+        // List items
+        pdf.setFontSize(10);
+        pdf.setFont("helvetica", "normal");
+        const text = "• " + line.replace(/^[-•] /, "");
+        const splitText = pdf.splitTextToSize(text, maxWidth - 10);
+        splitText.forEach((textLine: string) => {
+          if (yPosition > pdf.internal.pageSize.getHeight() - 20) {
+            pdf.addPage();
+            yPosition = 20;
+          }
+          pdf.text(textLine, margin + 5, yPosition);
+          yPosition += lineHeight;
+        });
+      } else if (line.trim() === "") {
+        yPosition += lineHeight / 2;
+      } else {
+        // Regular text - handle bold markers
+        pdf.setFontSize(10);
+        pdf.setFont("helvetica", "normal");
+        const cleanedLine = line.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
+        const splitText = pdf.splitTextToSize(cleanedLine, maxWidth);
+        splitText.forEach((textLine: string) => {
+          if (yPosition > pdf.internal.pageSize.getHeight() - 20) {
+            pdf.addPage();
+            yPosition = 20;
+          }
+          pdf.text(textLine, margin, yPosition);
+          yPosition += lineHeight;
+        });
+      }
+    });
+    
+    // Add footer
+    const pageCount = pdf.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      pdf.setPage(i);
+      pdf.setFontSize(8);
+      pdf.setTextColor(128, 128, 128);
+      pdf.text(
+        `Page ${i} of ${pageCount} | FinSight AI`,
+        pageWidth / 2,
+        pdf.internal.pageSize.getHeight() - 10,
+        { align: "center" }
+      );
+    }
+    
+    pdf.save(`finsight-analysis-${messageId}.pdf`);
     toast({
-      title: "Downloaded",
-      description: "Analysis exported successfully",
+      title: "PDF Downloaded",
+      description: "Analysis exported as PDF successfully",
     });
   };
 
