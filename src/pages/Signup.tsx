@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { TrendingUp, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-
+import PageTransition from "@/components/layout/PageTransition";
 
 const Signup = () => {
   const [name, setName] = useState("");
@@ -50,6 +50,7 @@ const Signup = () => {
   };
 
   return (
+    <PageTransition>
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden py-12">
       {/* Background Effects */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.1),transparent_50%)]" />
@@ -173,6 +174,7 @@ const Signup = () => {
         </div>
       </div>
     </div>
+    </PageTransition>
   );
 };
 
