@@ -16,13 +16,13 @@ const Footer = () => {
           </div>
 
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
-            <Link to="/dashboard" className="hover:text-foreground transition-colors">
-              Dashboard
-            </Link>
-            <Link to="/analysis" className="hover:text-foreground transition-colors">
+            <Link to="/chat" className="hover:text-foreground transition-colors">
               Analysis
             </Link>
-            <span>© 2024 FinSight AI. Educational Use Only.</span>
+            <Link to="/login" className="hover:text-foreground transition-colors">
+              Sign In
+            </Link>
+            <span>© {new Date().getFullYear()} FinSight AI. Educational Use Only.</span>
           </div>
         </div>
       </div>

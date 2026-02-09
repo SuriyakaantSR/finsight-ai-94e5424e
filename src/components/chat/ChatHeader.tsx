@@ -30,17 +30,9 @@ const ChatHeader = ({ onMenuClick, userName }: ChatHeaderProps) => {
         <Button
           variant="ghost"
           size="icon"
-          className="shrink-0 md:hidden"
+          className="shrink-0 h-9 w-9 rounded-lg"
           onClick={onMenuClick}
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          className="hidden shrink-0 md:flex"
-          onClick={onMenuClick}
+          title="Toggle sidebar"
         >
           <Menu className="h-5 w-5" />
         </Button>
