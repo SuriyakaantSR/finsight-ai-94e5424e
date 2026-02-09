@@ -18,7 +18,6 @@ const ChatInput = ({ onSend, isLoading }: ChatInputProps) => {
   const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -48,8 +47,8 @@ const ChatInput = ({ onSend, isLoading }: ChatInputProps) => {
   };
 
   return (
-    <div className="border-t border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      {/* Suggested Queries (shown only when input is empty) */}
+    <div className="border-t border-border/30 bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/80">
+      {/* Suggested Queries */}
       {!input && (
         <div className="mx-auto max-w-3xl px-4 pt-3">
           <div className="flex flex-wrap gap-2">
@@ -58,7 +57,7 @@ const ChatInput = ({ onSend, isLoading }: ChatInputProps) => {
                 key={query}
                 onClick={() => handleSuggestionClick(query)}
                 disabled={isLoading}
-                className="rounded-full border border-border/50 bg-card/50 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-card hover:text-foreground disabled:opacity-50"
+                className="rounded-full border border-border/40 bg-card/60 px-3.5 py-1.5 text-xs text-muted-foreground transition-all duration-150 hover:bg-card hover:text-foreground hover:border-primary/30 hover:shadow-sm disabled:opacity-50 active:scale-95"
               >
                 {query}
               </button>
@@ -69,7 +68,7 @@ const ChatInput = ({ onSend, isLoading }: ChatInputProps) => {
 
       {/* Input Form */}
       <form onSubmit={handleSubmit} className="mx-auto max-w-3xl px-4 py-3">
-        <div className="relative flex items-end gap-2 rounded-2xl border border-border/50 bg-card p-2 shadow-sm focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20">
+        <div className="relative flex items-end gap-2 rounded-2xl border border-border/40 bg-card/80 p-2 shadow-md transition-all duration-200 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/10 focus-within:shadow-lg">
           <textarea
             ref={textareaRef}
             value={input}
@@ -78,14 +77,14 @@ const ChatInput = ({ onSend, isLoading }: ChatInputProps) => {
             placeholder="Ask about Indian stocks or investment concepts..."
             disabled={isLoading}
             rows={1}
-            className="flex-1 resize-none bg-transparent px-2 py-1.5 text-sm outline-none placeholder:text-muted-foreground disabled:opacity-50"
-            style={{ minHeight: "24px", maxHeight: "150px" }}
+            className="flex-1 resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-muted-foreground/60 disabled:opacity-50"
+            style={{ minHeight: "28px", maxHeight: "150px" }}
           />
           <Button
             type="submit"
             size="icon"
             disabled={isLoading || !input.trim()}
-            className="h-8 w-8 shrink-0 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            className="h-9 w-9 shrink-0 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30 transition-all duration-150 active:scale-95"
           >
             <Send className="h-4 w-4" />
           </Button>
@@ -94,9 +93,9 @@ const ChatInput = ({ onSend, isLoading }: ChatInputProps) => {
 
       {/* Disclaimer */}
       <div className="mx-auto max-w-3xl px-4 pb-3">
-        <div className="flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground">
+        <div className="flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground/50">
           <AlertCircle className="h-3 w-3" />
-          <span>Educational analysis only. Based on historical data. Not investment advice.</span>
+          <span>Educational analysis only · Based on historical data · Not investment advice</span>
         </div>
       </div>
     </div>

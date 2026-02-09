@@ -1,8 +1,7 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Bot, User, Loader2, Copy, Download, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Message } from "./ChatLayout";
-import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 
@@ -39,53 +38,42 @@ const ChatMessages = ({ messages, isLoading }: ChatMessagesProps) => {
     const pageWidth = pdf.internal.pageSize.getWidth();
     const margin = 20;
     const maxWidth = pageWidth - margin * 2;
-    
-    // Add header
+
     pdf.setFontSize(16);
     pdf.setFont("helvetica", "bold");
     pdf.text("FinSight AI - Stock Analysis", margin, 20);
-    
-    // Add timestamp
+
     pdf.setFontSize(10);
     pdf.setFont("helvetica", "normal");
     pdf.setTextColor(128, 128, 128);
     pdf.text(`Generated: ${new Date().toLocaleString()}`, margin, 28);
-    
-    // Add disclaimer
+
     pdf.setFontSize(8);
     pdf.text("Educational analysis only. Not investment advice.", margin, 34);
-    
-    // Reset text color
+
     pdf.setTextColor(0, 0, 0);
-    
-    // Process content
+
     let yPosition = 45;
     const lineHeight = 6;
-    
     const lines = content.split("\n");
-    
+
     lines.forEach((line) => {
-      // Check if we need a new page
       if (yPosition > pdf.internal.pageSize.getHeight() - 20) {
         pdf.addPage();
         yPosition = 20;
       }
-      
-      // Headers
+
       if (line.startsWith("### ")) {
         pdf.setFontSize(12);
         pdf.setFont("helvetica", "bold");
-        const text = line.replace("### ", "");
-        pdf.text(text, margin, yPosition);
+        pdf.text(line.replace("### ", ""), margin, yPosition);
         yPosition += lineHeight + 2;
       } else if (line.startsWith("## ")) {
         pdf.setFontSize(14);
         pdf.setFont("helvetica", "bold");
-        const text = line.replace("## ", "");
-        pdf.text(text, margin, yPosition);
+        pdf.text(line.replace("## ", ""), margin, yPosition);
         yPosition += lineHeight + 3;
       } else if (line.startsWith("- ") || line.startsWith("• ")) {
-        // List items
         pdf.setFontSize(10);
         pdf.setFont("helvetica", "normal");
         const text = "• " + line.replace(/^[-•] /, "");
@@ -101,7 +89,6 @@ const ChatMessages = ({ messages, isLoading }: ChatMessagesProps) => {
       } else if (line.trim() === "") {
         yPosition += lineHeight / 2;
       } else {
-        // Regular text - handle bold markers
         pdf.setFontSize(10);
         pdf.setFont("helvetica", "normal");
         const cleanedLine = line.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
@@ -116,8 +103,7 @@ const ChatMessages = ({ messages, isLoading }: ChatMessagesProps) => {
         });
       }
     });
-    
-    // Add footer
+
     const pageCount = pdf.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       pdf.setPage(i);
@@ -130,7 +116,7 @@ const ChatMessages = ({ messages, isLoading }: ChatMessagesProps) => {
         { align: "center" }
       );
     }
-    
+
     pdf.save(`finsight-analysis-${messageId}.pdf`);
     toast({
       title: "PDF Downloaded",
@@ -138,110 +124,90 @@ const ChatMessages = ({ messages, isLoading }: ChatMessagesProps) => {
     });
   };
 
+  const renderInlineMarkdown = (text: string) => {
+    // Handle bold + italic inline
+    const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
+    return parts.map((part, j) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return <strong key={j} className="font-semibold text-foreground">{part.slice(2, -2)}</strong>;
+      }
+      if (part.startsWith("*") && part.endsWith("*")) {
+        return <em key={j} className="italic text-muted-foreground">{part.slice(1, -1)}</em>;
+      }
+      return part;
+    });
+  };
+
   const renderMarkdown = (content: string) => {
     return content.split("\n").map((line, i) => {
-      // Headers
       if (line.startsWith("### ")) {
         return (
-          <h4 key={i} className="mt-4 mb-2 text-sm font-semibold text-primary">
+          <h4 key={i} className="mt-5 mb-2 text-sm font-semibold text-primary tracking-wide uppercase">
             {line.replace("### ", "")}
           </h4>
         );
       }
       if (line.startsWith("## ")) {
         return (
-          <h3 key={i} className="mt-4 mb-2 text-base font-semibold">
+          <h3 key={i} className="mt-5 mb-2 text-base font-bold">
             {line.replace("## ", "")}
           </h3>
         );
       }
-
-      // Bold text
-      if (line.includes("**")) {
-        const parts = line.split(/\*\*(.*?)\*\*/g);
-        return (
-          <p key={i} className="mb-1.5 leading-relaxed">
-            {parts.map((part, j) =>
-              j % 2 === 1 ? (
-                <strong key={j} className="font-semibold">
-                  {part}
-                </strong>
-              ) : (
-                part
-              )
-            )}
-          </p>
-        );
-      }
-
-      // Italic text
-      if (line.includes("*") && !line.includes("**")) {
-        const parts = line.split(/\*(.*?)\*/g);
-        return (
-          <p key={i} className="mb-1.5 text-muted-foreground text-sm italic leading-relaxed">
-            {parts.map((part, j) => (j % 2 === 1 ? <em key={j}>{part}</em> : part))}
-          </p>
-        );
-      }
-
-      // List items
       if (line.startsWith("- ") || line.startsWith("• ")) {
         return (
-          <li key={i} className="ml-4 mb-1 text-sm leading-relaxed list-disc">
-            {line.replace(/^[-•] /, "")}
+          <li key={i} className="ml-4 mb-1.5 text-sm leading-relaxed list-disc marker:text-primary/60">
+            {renderInlineMarkdown(line.replace(/^[-•] /, ""))}
           </li>
         );
       }
-
-      // Empty lines
       if (!line.trim()) {
-        return <div key={i} className="h-2" />;
+        return <div key={i} className="h-3" />;
       }
-
-      // Regular paragraphs
       return (
-        <p key={i} className="mb-1.5 leading-relaxed">
-          {line}
+        <p key={i} className="mb-2 text-sm leading-relaxed">
+          {renderInlineMarkdown(line)}
         </p>
       );
     });
   };
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="mx-auto max-w-3xl px-4 py-6">
-        <div className="space-y-6">
-          {messages.map((message) => (
+    <div className="flex-1 overflow-y-auto scroll-smooth">
+      <div className="mx-auto max-w-3xl px-4 py-8">
+        <div className="space-y-8">
+          {messages.map((message, index) => (
             <div
               key={message.id}
-              className={`flex gap-4 ${message.role === "user" ? "flex-row-reverse" : ""}`}
+              className={`flex gap-3 sm:gap-4 animate-fade-in ${message.role === "user" ? "flex-row-reverse" : ""}`}
+              style={{ animationDelay: index === messages.length - 1 ? "0.05s" : "0s" }}
             >
               {/* Avatar */}
               <div
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-sm ${
                   message.role === "assistant"
-                    ? "bg-primary/10"
-                    : "bg-secondary"
+                    ? "bg-primary/10 ring-1 ring-primary/20"
+                    : "bg-secondary ring-1 ring-border/50"
                 }`}
               >
                 {message.role === "assistant" ? (
                   <Bot className="h-4 w-4 text-primary" />
                 ) : (
-                  <User className="h-4 w-4" />
+                  <User className="h-4 w-4 text-muted-foreground" />
                 )}
               </div>
 
               {/* Message Content */}
               <div
-                className={`flex flex-col max-w-[85%] ${
+                className={`flex flex-col min-w-0 max-w-[88%] sm:max-w-[85%] ${
                   message.role === "user" ? "items-end" : "items-start"
                 }`}
               >
                 <div
-                  className={`rounded-2xl px-4 py-3 ${
+                  className={`rounded-2xl px-4 py-3 shadow-sm transition-colors ${
                     message.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-card border border-border/50"
+                      ? "bg-primary text-primary-foreground rounded-br-md"
+                      : "bg-card border border-border/50 rounded-bl-md"
                   }`}
                 >
                   <div className="text-sm">{renderMarkdown(message.content)}</div>
@@ -249,15 +215,20 @@ const ChatMessages = ({ messages, isLoading }: ChatMessagesProps) => {
 
                 {/* Message Controls (Assistant only) */}
                 {message.role === "assistant" && message.id !== "welcome" && (
-                  <div className="mt-1 flex items-center gap-1">
+                  <div className="mt-1.5 flex items-center gap-0.5 opacity-0 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200 group-hover:opacity-100"
+                    style={{ opacity: copiedId === message.id ? 1 : undefined }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = "1"}
+                    onMouseLeave={(e) => { if (copiedId !== message.id) e.currentTarget.style.opacity = "0"; }}
+                  >
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground rounded-lg"
                       onClick={() => handleCopy(message.content, message.id)}
+                      title="Copy text"
                     >
                       {copiedId === message.id ? (
-                        <Check className="h-3.5 w-3.5 text-success" />
+                        <Check className="h-3.5 w-3.5 text-primary" />
                       ) : (
                         <Copy className="h-3.5 w-3.5" />
                       )}
@@ -265,12 +236,13 @@ const ChatMessages = ({ messages, isLoading }: ChatMessagesProps) => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground rounded-lg"
                       onClick={() => handleDownloadPDF(message.content, message.id)}
+                      title="Export as PDF"
                     >
                       <Download className="h-3.5 w-3.5" />
                     </Button>
-                    <span className="ml-2 text-xs text-muted-foreground">
+                    <span className="ml-2 text-[11px] text-muted-foreground/70 tabular-nums">
                       {message.timestamp.toLocaleTimeString([], {
                         hour: "2-digit",
                         minute: "2-digit",
@@ -284,14 +256,18 @@ const ChatMessages = ({ messages, isLoading }: ChatMessagesProps) => {
 
           {/* Loading Indicator */}
           {isLoading && (
-            <div className="flex gap-4">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+            <div className="flex gap-3 sm:gap-4 animate-fade-in">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/20">
                 <Bot className="h-4 w-4 text-primary" />
               </div>
-              <div className="rounded-2xl bg-card border border-border/50 px-4 py-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Analyzing stock data...</span>
+              <div className="rounded-2xl rounded-bl-md bg-card border border-border/50 px-4 py-3 shadow-sm">
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  <div className="flex gap-1">
+                    <span className="h-2 w-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="h-2 w-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="h-2 w-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                  <span>Analyzing...</span>
                 </div>
               </div>
             </div>
