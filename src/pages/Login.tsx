@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { TrendingUp, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import PageTransition from "@/components/layout/PageTransition";
 
 
 const Login = () => {
@@ -46,6 +47,7 @@ const Login = () => {
   };
 
   return (
+    <PageTransition>
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
       {/* Background Effects */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.1),transparent_50%)]" />
@@ -149,6 +151,7 @@ const Login = () => {
         </div>
       </div>
     </div>
+    </PageTransition>
   );
 };
 
