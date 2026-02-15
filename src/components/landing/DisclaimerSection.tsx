@@ -1,10 +1,17 @@
 import { AlertTriangle } from "lucide-react";
+import { motion } from "framer-motion";
 
 const DisclaimerSection = () => {
   return (
     <section className="py-16 border-t border-border/50">
       <div className="container mx-auto px-4">
-        <div className="max-w-3xl mx-auto">
+        <motion.div
+          className="max-w-3xl mx-auto"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
           <div className="p-6 rounded-xl bg-warning/5 border border-warning/20">
             <div className="flex items-start gap-4">
               <div className="h-10 w-10 rounded-lg bg-warning/10 flex items-center justify-center shrink-0">
@@ -18,7 +25,7 @@ const DisclaimerSection = () => {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
