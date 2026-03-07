@@ -1,6 +1,6 @@
 import { Plus, MessageSquare, Trash2, X, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Conversation } from "./ChatLayout";
+import { Conversation } from "@/types/chat";
 import { cn } from "@/lib/utils";
 
 interface ChatSidebarProps {
