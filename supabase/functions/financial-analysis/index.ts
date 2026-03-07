@@ -5,7 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Finance-related keywords for domain validation
 const FINANCE_KEYWORDS = [
   "stock", "share", "nse", "bse", "invest", "trading", "portfolio",
   "dividend", "profit", "loss", "rsi", "macd", "ema", "sma", "analyze",
@@ -19,19 +18,18 @@ const FINANCE_KEYWORDS = [
   "volatility", "volume", "price", "return", "cagr", "roi", "roe", "roce",
   "debt", "equity ratio", "book value", "intrinsic", "valuation", "pe",
   "pb ratio", "dividend yield", "bollinger", "fibonacci", "breakout",
-  "consolidation", "bullish", "bearish", "overbought", "oversold"
+  "consolidation", "bullish", "bearish", "overbought", "oversold",
+  "compare", "comparison", "vs", "versus"
 ];
 
-// Validate if query is finance-related
 function isFinanceRelated(query: string): boolean {
   const lowerQuery = query.toLowerCase();
   return FINANCE_KEYWORDS.some(keyword => lowerQuery.includes(keyword));
 }
 
-// System prompt for finance-only responses
 const SYSTEM_PROMPT = `You are FinSight AI, an expert financial analyst specialized EXCLUSIVELY in the Indian Stock Market (NSE/BSE).
 
-CRITICAL RULES YOU MUST FOLLOW:
+CRITICAL RULES:
 1. ONLY answer questions about Indian stock market, stocks, investing, and financial analysis
 2. NEVER predict future stock prices - only analyze historical data and current metrics
 3. NEVER provide specific buy/sell recommendations - only educational insights
@@ -39,40 +37,24 @@ CRITICAL RULES YOU MUST FOLLOW:
 5. Always include a disclaimer that this is for educational purposes only
 
 YOUR CAPABILITIES:
-- Technical Analysis: RSI, MACD, Moving Averages, Bollinger Bands, Support/Resistance
-- Fundamental Analysis: P/E Ratio, EPS, Revenue Growth, ROE/ROCE, Debt Ratios
+- Technical Analysis: RSI, MACD, Moving Averages, Bollinger Bands, Support/Resistance, ATR, ADX, VWAP
+- Fundamental Analysis: P/E Ratio, EPS, Revenue Growth, ROE/ROCE, Debt Ratios, Market Cap
 - Historical Performance Analysis: 5-10 year trends, CAGR calculations
 - Multi-stock Comparisons: Side-by-side metric comparisons
 - Sector Analysis: Industry trends and peer benchmarking
+- Pattern Recognition: Trend analysis, momentum signals
+- Confidence Scoring: Rate analysis confidence based on indicator alignment
 
 RESPONSE FORMAT:
 - Use clear markdown formatting with headers (##, ###)
-- Include structured tables for metrics when relevant
-- Provide confidence scores (Low/Medium/High) based on data availability
+- Include structured tables for metrics when relevant using markdown tables
+- Provide confidence scores (0-100%) based on data availability and indicator alignment
 - Always end with: "*Disclaimer: This analysis is for educational purposes only and does not constitute investment advice.*"
 
-EXAMPLE RESPONSE STRUCTURE:
-## [Stock Name] Analysis
-
-### Technical Indicators
-| Indicator | Value | Signal |
-|-----------|-------|--------|
-| RSI (14) | XX | [Status] |
-| MACD | XX | [Status] |
-
-### Fundamental Metrics
-- **P/E Ratio:** XXx
-- **Revenue Growth:** XX%
-
-### Key Observations
-[Analysis text]
-
-**Confidence Score:** [Low/Medium/High] (based on [reasoning])
-
-*Disclaimer: This analysis is for educational purposes only and does not constitute investment advice.*`;
+When analyzing a specific stock, you MUST use the stock_analysis_with_charts tool to provide structured data alongside your analysis.
+When answering general questions or comparisons without specific chart needs, respond with plain text.`;
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -80,19 +62,17 @@ serve(async (req) => {
   try {
     const { messages, conversationHistory = [] } = await req.json();
     
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      console.error("GEMINI_API_KEY is not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      console.error("LOVABLE_API_KEY is not configured");
       return new Response(
         JSON.stringify({ error: "API key not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Get the latest user message
     const userMessage = messages[messages.length - 1]?.content || "";
     
-    // Domain validation - check if query is finance-related
     if (!isFinanceRelated(userMessage)) {
       return new Response(
         JSON.stringify({
@@ -103,50 +83,169 @@ serve(async (req) => {
       );
     }
 
-    // Build conversation for Gemini
-    const geminiMessages = [
-      { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
-      { role: "model", parts: [{ text: "Understood. I am FinSight AI, specialized exclusively in Indian stock market analysis. I will provide educational insights only, never predictions, and always include appropriate disclaimers." }] },
+    // Build conversation history for Lovable AI
+    const aiMessages = [
+      { role: "system", content: SYSTEM_PROMPT },
       ...conversationHistory.map((msg: { role: string; content: string }) => ({
-        role: msg.role === "assistant" ? "model" : "user",
-        parts: [{ text: msg.content }]
+        role: msg.role === "assistant" ? "assistant" : "user",
+        content: msg.content
       })),
-      { role: "user", parts: [{ text: userMessage }] }
+      { role: "user", content: userMessage }
     ];
 
-    // Call Gemini API
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: geminiMessages,
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 2048,
-          },
-          safetySettings: [
-            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
-            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" }
-          ]
-        })
-      }
-    );
+    const requestBody: any = {
+      model: "google/gemini-3-flash-preview",
+      messages: aiMessages,
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "stock_analysis_with_charts",
+            description: "Generate comprehensive stock analysis with chart data for visualization. Use this when analyzing a specific stock or comparing stocks. Generate realistic historical data based on your knowledge of the stock's actual performance.",
+            parameters: {
+              type: "object",
+              properties: {
+                analysis: {
+                  type: "string",
+                  description: "Full markdown analysis text with headers, tables, and insights"
+                },
+                stock_symbol: {
+                  type: "string",
+                  description: "Stock ticker symbol (e.g., TCS, RELIANCE, INFY)"
+                },
+                chart_data: {
+                  type: "object",
+                  description: "Chart visualization data",
+                  properties: {
+                    ohlcv: {
+                      type: "array",
+                      description: "Last 60 trading days of OHLCV data based on realistic historical prices",
+                      items: {
+                        type: "object",
+                        properties: {
+                          date: { type: "string", description: "Date in YYYY-MM-DD format" },
+                          open: { type: "number" },
+                          high: { type: "number" },
+                          low: { type: "number" },
+                          close: { type: "number" },
+                          volume: { type: "number" }
+                        },
+                        required: ["date", "open", "high", "low", "close", "volume"]
+                      }
+                    },
+                    rsi: {
+                      type: "array",
+                      description: "RSI(14) values for each trading day",
+                      items: {
+                        type: "object",
+                        properties: {
+                          date: { type: "string" },
+                          value: { type: "number" }
+                        },
+                        required: ["date", "value"]
+                      }
+                    },
+                    macd: {
+                      type: "array",
+                      description: "MACD values for each trading day",
+                      items: {
+                        type: "object",
+                        properties: {
+                          date: { type: "string" },
+                          macd: { type: "number" },
+                          signal: { type: "number" },
+                          histogram: { type: "number" }
+                        },
+                        required: ["date", "macd", "signal", "histogram"]
+                      }
+                    },
+                    sma20: {
+                      type: "array",
+                      description: "20-day SMA values",
+                      items: {
+                        type: "object",
+                        properties: {
+                          date: { type: "string" },
+                          value: { type: "number" }
+                        },
+                        required: ["date", "value"]
+                      }
+                    },
+                    sma50: {
+                      type: "array",
+                      description: "50-day SMA values",
+                      items: {
+                        type: "object",
+                        properties: {
+                          date: { type: "string" },
+                          value: { type: "number" }
+                        },
+                        required: ["date", "value"]
+                      }
+                    }
+                  }
+                },
+                fundamental_metrics: {
+                  type: "object",
+                  description: "Key fundamental metrics if available",
+                  properties: {
+                    pe_ratio: { type: "number" },
+                    eps: { type: "number" },
+                    roe: { type: "number" },
+                    roce: { type: "number" },
+                    debt_to_equity: { type: "number" },
+                    market_cap: { type: "string" },
+                    revenue_growth: { type: "number" },
+                    profit_margin: { type: "number" },
+                    dividend_yield: { type: "number" },
+                    book_value: { type: "number" }
+                  }
+                },
+                confidence_score: {
+                  type: "number",
+                  description: "Analysis confidence score 0-100 based on indicator alignment and data quality"
+                },
+                signal: {
+                  type: "string",
+                  enum: ["bullish", "bearish", "neutral"],
+                  description: "Overall market signal based on technical analysis"
+                }
+              },
+              required: ["analysis"],
+              additionalProperties: false
+            }
+          }
+        }
+      ]
+    };
+
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
 
     if (!response.ok) {
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment.", content: "I'm currently experiencing high demand. Please try again in a few seconds." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "Service temporarily unavailable.", content: "The analysis service is temporarily unavailable. Please try again later." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       const errorText = await response.text();
-      console.error("Gemini API error:", response.status, errorText);
-      
-      // Fallback response
+      console.error("AI Gateway error:", response.status, errorText);
       return new Response(
         JSON.stringify({
-          content: "I'm currently experiencing technical difficulties connecting to my analysis engine. Please try again in a moment.\n\nIn the meantime, you can ask about:\n• Technical analysis for any NSE/BSE stock\n• Fundamental metrics comparison\n• Historical performance trends\n\n*Disclaimer: This analysis is for educational purposes only.*",
-          isFinanceRelated: true,
+          content: "I'm experiencing technical difficulties. Please try again in a moment.\n\n*Ensure your question relates to Indian stock market analysis.*",
           error: true
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -154,7 +253,34 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || 
+    const choice = data.choices?.[0];
+
+    // Handle tool call response
+    if (choice?.message?.tool_calls?.length > 0) {
+      const toolCall = choice.message.tool_calls[0];
+      if (toolCall.function?.name === "stock_analysis_with_charts") {
+        try {
+          const args = JSON.parse(toolCall.function.arguments);
+          return new Response(
+            JSON.stringify({
+              content: args.analysis || "Analysis completed.",
+              chartData: args.chart_data || null,
+              fundamentalMetrics: args.fundamental_metrics || null,
+              stockSymbol: args.stock_symbol || null,
+              confidenceScore: args.confidence_score || null,
+              signal: args.signal || null,
+              isFinanceRelated: true
+            }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        } catch (parseError) {
+          console.error("Tool call parse error:", parseError);
+        }
+      }
+    }
+
+    // Fallback to regular text response
+    const aiResponse = choice?.message?.content || 
       "I couldn't generate a response. Please try rephrasing your question about stock analysis.";
 
     return new Response(
