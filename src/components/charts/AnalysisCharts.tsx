@@ -35,12 +35,12 @@ const AnalysisCharts = ({
     return null;
   }
 
-  const tabs: { id: ChartTab; label: string; icon: any; available: boolean }[] = [
-    { id: "price", label: "Price", icon: CandlestickIcon, available: !!hasCharts },
-    { id: "rsi", label: "RSI", icon: Activity, available: !!hasRSI },
-    { id: "macd", label: "MACD", icon: LineChart, available: !!hasMACD },
-    { id: "fundamentals", label: "Fundamentals", icon: BarChart3, available: !!hasFundamentals },
-  ].filter(t => t.available);
+  const tabs = ([
+    { id: "price" as ChartTab, label: "Price", icon: CandlestickIcon, available: !!hasCharts },
+    { id: "rsi" as ChartTab, label: "RSI", icon: Activity, available: !!hasRSI },
+    { id: "macd" as ChartTab, label: "MACD", icon: LineChart, available: !!hasMACD },
+    { id: "fundamentals" as ChartTab, label: "Fundamentals", icon: BarChart3, available: !!hasFundamentals },
+  ]).filter(t => t.available);
 
   return (
     <div className="mt-3 space-y-3 animate-fade-in">

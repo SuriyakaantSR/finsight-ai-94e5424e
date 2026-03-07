@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { createChart, ColorType, CandlestickSeries, VolumeSeries, LineSeries } from "lightweight-charts";
+import { createChart, ColorType } from "lightweight-charts";
 import { useTheme } from "@/hooks/useTheme";
 
 interface OHLCVData {
@@ -60,7 +60,7 @@ const CandlestickChart = ({ data, sma20, sma50, stockSymbol }: CandlestickChartP
     });
 
     // Candlestick series
-    const candlestickSeries = chart.addSeries(CandlestickSeries, {
+    const candlestickSeries = chart.addCandlestickSeries({
       upColor: "#10b981",
       downColor: "#ef4444",
       borderDownColor: "#ef4444",
@@ -79,8 +79,8 @@ const CandlestickChart = ({ data, sma20, sma50, stockSymbol }: CandlestickChartP
     candlestickSeries.setData(candleData);
 
     // Volume series
-    const volumeSeries = chart.addSeries(VolumeSeries, {
-      priceFormat: { type: "volume" },
+    const volumeSeries = chart.addHistogramSeries({
+      priceFormat: { type: "volume" as any },
       priceScaleId: "volume",
     });
 
@@ -99,7 +99,7 @@ const CandlestickChart = ({ data, sma20, sma50, stockSymbol }: CandlestickChartP
 
     // SMA 20
     if (sma20?.length) {
-      const sma20Series = chart.addSeries(LineSeries, {
+      const sma20Series = chart.addLineSeries({
         color: "#f59e0b",
         lineWidth: 1,
         crosshairMarkerVisible: false,
@@ -111,7 +111,7 @@ const CandlestickChart = ({ data, sma20, sma50, stockSymbol }: CandlestickChartP
 
     // SMA 50
     if (sma50?.length) {
-      const sma50Series = chart.addSeries(LineSeries, {
+      const sma50Series = chart.addLineSeries({
         color: "#8b5cf6",
         lineWidth: 1,
         crosshairMarkerVisible: false,
