@@ -16,7 +16,7 @@ interface AnalysisChartsProps {
   signal?: "bullish" | "bearish" | "neutral" | null;
 }
 
-type ChartTab = "price" | "rsi" | "macd" | "fundamentals";
+type ChartTab = "price" | "rsi" | "macd" | "fundamentals" | "backtest";
 
 const AnalysisCharts = ({
   chartData,
