@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { BarChart3, CandlestickChart as CandlestickIcon, Activity, LineChart } from "lucide-react";
+import { BarChart3, CandlestickChart as CandlestickIcon, Activity, LineChart, FlaskConical } from "lucide-react";
 import CandlestickChart from "./CandlestickChart";
 import { RSIChart, MACDChart } from "./IndicatorCharts";
 import FundamentalsCard from "./FundamentalsCard";
 import ConfidenceBadge from "./ConfidenceBadge";
+import BacktestingCard from "./BacktestingCard";
 import { Button } from "@/components/ui/button";
 import { ChartData } from "@/types/chat";
 
@@ -15,7 +16,7 @@ interface AnalysisChartsProps {
   signal?: "bullish" | "bearish" | "neutral" | null;
 }
 
-type ChartTab = "price" | "rsi" | "macd" | "fundamentals";
+type ChartTab = "price" | "rsi" | "macd" | "fundamentals" | "backtest";
 
 const AnalysisCharts = ({
   chartData,
@@ -40,6 +41,7 @@ const AnalysisCharts = ({
     { id: "rsi" as ChartTab, label: "RSI", icon: Activity, available: !!hasRSI },
     { id: "macd" as ChartTab, label: "MACD", icon: LineChart, available: !!hasMACD },
     { id: "fundamentals" as ChartTab, label: "Fundamentals", icon: BarChart3, available: !!hasFundamentals },
+    { id: "backtest" as ChartTab, label: "Backtest", icon: FlaskConical, available: !!hasCharts && !!hasRSI },
   ]).filter(t => t.available);
 
   return (
@@ -86,6 +88,14 @@ const AnalysisCharts = ({
       {activeTab === "fundamentals" && hasFundamentals && (
         <FundamentalsCard
           metrics={fundamentalMetrics}
+          stockSymbol={stockSymbol || undefined}
+        />
+      )}
+
+      {activeTab === "backtest" && hasCharts && hasRSI && (
+        <BacktestingCard
+          ohlcvData={chartData!.ohlcv!}
+          rsiData={chartData!.rsi!}
           stockSymbol={stockSymbol || undefined}
         />
       )}
