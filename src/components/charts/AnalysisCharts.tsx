@@ -91,6 +91,14 @@ const AnalysisCharts = ({
           stockSymbol={stockSymbol || undefined}
         />
       )}
+
+      {activeTab === "backtest" && hasCharts && hasRSI && (
+        <BacktestingCard
+          ohlcvData={chartData!.ohlcv!}
+          rsiData={chartData!.rsi!}
+          stockSymbol={stockSymbol || undefined}
+        />
+      )}
     </div>
   );
 };
