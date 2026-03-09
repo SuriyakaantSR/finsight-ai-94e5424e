@@ -41,6 +41,7 @@ const AnalysisCharts = ({
     { id: "rsi" as ChartTab, label: "RSI", icon: Activity, available: !!hasRSI },
     { id: "macd" as ChartTab, label: "MACD", icon: LineChart, available: !!hasMACD },
     { id: "fundamentals" as ChartTab, label: "Fundamentals", icon: BarChart3, available: !!hasFundamentals },
+    { id: "backtest" as ChartTab, label: "Backtest", icon: FlaskConical, available: !!hasCharts && !!hasRSI },
   ]).filter(t => t.available);
 
   return (
