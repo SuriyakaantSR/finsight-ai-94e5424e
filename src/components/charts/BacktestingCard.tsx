@@ -191,14 +191,27 @@ const BacktestingCard = ({ ohlcvData, rsiData, stockSymbol }: BacktestingCardPro
               />
             </div>
           </div>
-          <Button
-            size="sm"
-            className="h-8 gap-1.5 text-xs"
-            onClick={() => setHasRun(true)}
-          >
-            <Play className="h-3 w-3" />
-            Run Backtest
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => setHasRun(true)}
+            >
+              <Play className="h-3 w-3" />
+              Run Backtest
+            </Button>
+            {result && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => exportBacktestCsv(result, stockSymbol)}
+              >
+                <FileDown className="h-3 w-3" />
+                Export CSV
+              </Button>
+            )}
+          </div>
         </div>
       )}
 
