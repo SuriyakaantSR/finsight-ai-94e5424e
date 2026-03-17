@@ -40,6 +40,18 @@ export interface FundamentalMetrics {
   book_value?: number;
 }
 
+export interface ComparisonStock {
+  symbol: string;
+  chartData?: ChartData | null;
+  fundamentalMetrics?: FundamentalMetrics | null;
+  confidenceScore?: number | null;
+  signal?: "bullish" | "bearish" | "neutral" | null;
+}
+
+export interface ComparisonData {
+  stocks: [ComparisonStock, ComparisonStock];
+}
+
 export interface Message {
   id: string;
   role: "user" | "assistant";
@@ -50,6 +62,7 @@ export interface Message {
   stockSymbol?: string | null;
   confidenceScore?: number | null;
   signal?: "bullish" | "bearish" | "neutral" | null;
+  comparisonData?: ComparisonData | null;
 }
 
 export interface Conversation {

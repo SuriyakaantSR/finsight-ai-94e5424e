@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Message } from "@/types/chat";
 import { useToast } from "@/hooks/use-toast";
 import AnalysisCharts from "@/components/charts/AnalysisCharts";
+import StockComparisonCard from "@/components/charts/StockComparisonCard";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import jsPDF from "jspdf";
@@ -161,6 +162,13 @@ const ChatMessages = ({ messages, isLoading }: ChatMessagesProps) => {
                       confidenceScore={message.confidenceScore}
                       signal={message.signal}
                     />
+                  </div>
+                )}
+
+                {/* Comparison Panel */}
+                {message.role === "assistant" && message.comparisonData && (
+                  <div className="w-full mt-3">
+                    <StockComparisonCard comparisonData={message.comparisonData} />
                   </div>
                 )}
 

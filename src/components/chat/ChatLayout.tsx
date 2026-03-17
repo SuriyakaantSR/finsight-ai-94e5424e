@@ -161,6 +161,7 @@ const ChatLayout = () => {
         stockSymbol: data.stockSymbol || null,
         confidenceScore: data.confidenceScore || null,
         signal: data.signal || null,
+        comparisonData: data.comparisonData || null,
       };
 
       await supabase.from("chat_messages").insert({

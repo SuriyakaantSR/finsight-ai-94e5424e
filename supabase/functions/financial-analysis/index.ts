@@ -27,6 +27,87 @@ function isFinanceRelated(query: string): boolean {
   return FINANCE_KEYWORDS.some(keyword => lowerQuery.includes(keyword));
 }
 
+const chartDataSchema = {
+  type: "object",
+  description: "Chart visualization data",
+  properties: {
+    ohlcv: {
+      type: "array",
+      description: "Last 60 trading days of OHLCV data based on realistic historical prices",
+      items: {
+        type: "object",
+        properties: {
+          date: { type: "string", description: "Date in YYYY-MM-DD format" },
+          open: { type: "number" },
+          high: { type: "number" },
+          low: { type: "number" },
+          close: { type: "number" },
+          volume: { type: "number" }
+        },
+        required: ["date", "open", "high", "low", "close", "volume"]
+      }
+    },
+    rsi: {
+      type: "array",
+      description: "RSI(14) values for each trading day",
+      items: {
+        type: "object",
+        properties: { date: { type: "string" }, value: { type: "number" } },
+        required: ["date", "value"]
+      }
+    },
+    macd: {
+      type: "array",
+      description: "MACD values for each trading day",
+      items: {
+        type: "object",
+        properties: {
+          date: { type: "string" },
+          macd: { type: "number" },
+          signal: { type: "number" },
+          histogram: { type: "number" }
+        },
+        required: ["date", "macd", "signal", "histogram"]
+      }
+    },
+    sma20: {
+      type: "array",
+      description: "20-day SMA values",
+      items: {
+        type: "object",
+        properties: { date: { type: "string" }, value: { type: "number" } },
+        required: ["date", "value"]
+      }
+    },
+    sma50: {
+      type: "array",
+      description: "50-day SMA values",
+      items: {
+        type: "object",
+        properties: { date: { type: "string" }, value: { type: "number" } },
+        required: ["date", "value"]
+      }
+    }
+  }
+};
+
+const fundamentalMetricsSchema = {
+  type: "object",
+  description: "Key fundamental metrics",
+  properties: {
+    pe_ratio: { type: "number" },
+    eps: { type: "number" },
+    roe: { type: "number" },
+    roce: { type: "number" },
+    debt_to_equity: { type: "number" },
+    market_cap: { type: "string" },
+    revenue_growth: { type: "number" },
+    profit_margin: { type: "number" },
+    dividend_yield: { type: "number" },
+    book_value: { type: "number" }
+  }
+};
+
 const SYSTEM_PROMPT = `You are FinSight AI, an expert financial analyst specialized EXCLUSIVELY in the Indian Stock Market (NSE/BSE).
 
 CRITICAL RULES:
@@ -51,8 +132,10 @@ RESPONSE FORMAT:
 - Provide confidence scores (0-100%) based on data availability and indicator alignment
 - Always end with: "*Disclaimer: This analysis is for educational purposes only and does not constitute investment advice.*"
 
-When analyzing a specific stock, you MUST use the stock_analysis_with_charts tool to provide structured data alongside your analysis.
-When answering general questions or comparisons without specific chart needs, respond with plain text.`;
+TOOL USAGE:
+- When analyzing a SINGLE stock, use the stock_analysis_with_charts tool
+- When COMPARING two stocks (e.g. "compare X vs Y", "X versus Y"), use the stock_comparison tool to provide data for BOTH stocks
+- When answering general questions, respond with plain text`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -83,7 +166,6 @@ serve(async (req) => {
       );
     }
 
-    // Build conversation history for Lovable AI
     const aiMessages = [
       { role: "system", content: SYSTEM_PROMPT },
       ...conversationHistory.map((msg: { role: string; content: string }) => ({
@@ -93,6 +175,18 @@ serve(async (req) => {
       { role: "user", content: userMessage }
     ];
 
+    const stockSchema = {
+      type: "object",
+      properties: {
+        symbol: { type: "string", description: "Stock ticker symbol" },
+        chart_data: chartDataSchema,
+        fundamental_metrics: fundamentalMetricsSchema,
+        confidence_score: { type: "number", description: "Confidence score 0-100" },
+        signal: { type: "string", enum: ["bullish", "bearish", "neutral"] }
+      },
+      required: ["symbol"]
+    };
+
     const requestBody: any = {
       model: "google/gemini-3-flash-preview",
       messages: aiMessages,
@@ -101,117 +195,35 @@ serve(async (req) => {
           type: "function",
           function: {
             name: "stock_analysis_with_charts",
-            description: "Generate comprehensive stock analysis with chart data for visualization. Use this when analyzing a specific stock or comparing stocks. Generate realistic historical data based on your knowledge of the stock's actual performance.",
+            description: "Generate comprehensive stock analysis with chart data for visualization. Use this when analyzing a SINGLE specific stock.",
             parameters: {
               type: "object",
               properties: {
-                analysis: {
-                  type: "string",
-                  description: "Full markdown analysis text with headers, tables, and insights"
-                },
-                stock_symbol: {
-                  type: "string",
-                  description: "Stock ticker symbol (e.g., TCS, RELIANCE, INFY)"
-                },
-                chart_data: {
-                  type: "object",
-                  description: "Chart visualization data",
-                  properties: {
-                    ohlcv: {
-                      type: "array",
-                      description: "Last 60 trading days of OHLCV data based on realistic historical prices",
-                      items: {
-                        type: "object",
-                        properties: {
-                          date: { type: "string", description: "Date in YYYY-MM-DD format" },
-                          open: { type: "number" },
-                          high: { type: "number" },
-                          low: { type: "number" },
-                          close: { type: "number" },
-                          volume: { type: "number" }
-                        },
-                        required: ["date", "open", "high", "low", "close", "volume"]
-                      }
-                    },
-                    rsi: {
-                      type: "array",
-                      description: "RSI(14) values for each trading day",
-                      items: {
-                        type: "object",
-                        properties: {
-                          date: { type: "string" },
-                          value: { type: "number" }
-                        },
-                        required: ["date", "value"]
-                      }
-                    },
-                    macd: {
-                      type: "array",
-                      description: "MACD values for each trading day",
-                      items: {
-                        type: "object",
-                        properties: {
-                          date: { type: "string" },
-                          macd: { type: "number" },
-                          signal: { type: "number" },
-                          histogram: { type: "number" }
-                        },
-                        required: ["date", "macd", "signal", "histogram"]
-                      }
-                    },
-                    sma20: {
-                      type: "array",
-                      description: "20-day SMA values",
-                      items: {
-                        type: "object",
-                        properties: {
-                          date: { type: "string" },
-                          value: { type: "number" }
-                        },
-                        required: ["date", "value"]
-                      }
-                    },
-                    sma50: {
-                      type: "array",
-                      description: "50-day SMA values",
-                      items: {
-                        type: "object",
-                        properties: {
-                          date: { type: "string" },
-                          value: { type: "number" }
-                        },
-                        required: ["date", "value"]
-                      }
-                    }
-                  }
-                },
-                fundamental_metrics: {
-                  type: "object",
-                  description: "Key fundamental metrics if available",
-                  properties: {
-                    pe_ratio: { type: "number" },
-                    eps: { type: "number" },
-                    roe: { type: "number" },
-                    roce: { type: "number" },
-                    debt_to_equity: { type: "number" },
-                    market_cap: { type: "string" },
-                    revenue_growth: { type: "number" },
-                    profit_margin: { type: "number" },
-                    dividend_yield: { type: "number" },
-                    book_value: { type: "number" }
-                  }
-                },
-                confidence_score: {
-                  type: "number",
-                  description: "Analysis confidence score 0-100 based on indicator alignment and data quality"
-                },
-                signal: {
-                  type: "string",
-                  enum: ["bullish", "bearish", "neutral"],
-                  description: "Overall market signal based on technical analysis"
-                }
+                analysis: { type: "string", description: "Full markdown analysis text" },
+                stock_symbol: { type: "string", description: "Stock ticker symbol" },
+                chart_data: chartDataSchema,
+                fundamental_metrics: fundamentalMetricsSchema,
+                confidence_score: { type: "number", description: "Analysis confidence score 0-100" },
+                signal: { type: "string", enum: ["bullish", "bearish", "neutral"] }
               },
               required: ["analysis"],
+              additionalProperties: false
+            }
+          }
+        },
+        {
+          type: "function",
+          function: {
+            name: "stock_comparison",
+            description: "Compare two stocks side-by-side with chart data and fundamental metrics for both. Use this when the user asks to compare two stocks (e.g. 'compare TCS vs INFY', 'RELIANCE versus HDFC').",
+            parameters: {
+              type: "object",
+              properties: {
+                analysis: { type: "string", description: "Full markdown comparison analysis text" },
+                stock_a: stockSchema,
+                stock_b: stockSchema
+              },
+              required: ["analysis", "stock_a", "stock_b"],
               additionalProperties: false
             }
           }
@@ -231,7 +243,7 @@ serve(async (req) => {
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment.", content: "I'm currently experiencing high demand. Please try again in a few seconds." }),
+          JSON.stringify({ error: "Rate limit exceeded.", content: "I'm currently experiencing high demand. Please try again in a few seconds." }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -258,6 +270,40 @@ serve(async (req) => {
     // Handle tool call response
     if (choice?.message?.tool_calls?.length > 0) {
       const toolCall = choice.message.tool_calls[0];
+      
+      if (toolCall.function?.name === "stock_comparison") {
+        try {
+          const args = JSON.parse(toolCall.function.arguments);
+          return new Response(
+            JSON.stringify({
+              content: args.analysis || "Comparison completed.",
+              comparisonData: {
+                stocks: [
+                  {
+                    symbol: args.stock_a?.symbol || "Stock A",
+                    chartData: args.stock_a?.chart_data || null,
+                    fundamentalMetrics: args.stock_a?.fundamental_metrics || null,
+                    confidenceScore: args.stock_a?.confidence_score || null,
+                    signal: args.stock_a?.signal || null,
+                  },
+                  {
+                    symbol: args.stock_b?.symbol || "Stock B",
+                    chartData: args.stock_b?.chart_data || null,
+                    fundamentalMetrics: args.stock_b?.fundamental_metrics || null,
+                    confidenceScore: args.stock_b?.confidence_score || null,
+                    signal: args.stock_b?.signal || null,
+                  }
+                ]
+              },
+              isFinanceRelated: true
+            }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        } catch (parseError) {
+          console.error("Comparison tool parse error:", parseError);
+        }
+      }
+
       if (toolCall.function?.name === "stock_analysis_with_charts") {
         try {
           const args = JSON.parse(toolCall.function.arguments);
@@ -279,15 +325,11 @@ serve(async (req) => {
       }
     }
 
-    // Fallback to regular text response
     const aiResponse = choice?.message?.content || 
       "I couldn't generate a response. Please try rephrasing your question about stock analysis.";
 
     return new Response(
-      JSON.stringify({
-        content: aiResponse,
-        isFinanceRelated: true
-      }),
+      JSON.stringify({ content: aiResponse, isFinanceRelated: true }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
