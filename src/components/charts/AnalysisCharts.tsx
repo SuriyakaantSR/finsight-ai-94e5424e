@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BarChart3, CandlestickChart as CandlestickIcon, Activity, LineChart, FlaskConical } from "lucide-react";
+import { BarChart3, CandlestickChart as CandlestickIcon, Activity, LineChart, FlaskConical, FileDown } from "lucide-react";
 import CandlestickChart from "./CandlestickChart";
 import { RSIChart, MACDChart } from "./IndicatorCharts";
 import FundamentalsCard from "./FundamentalsCard";
@@ -7,6 +7,7 @@ import ConfidenceBadge from "./ConfidenceBadge";
 import BacktestingCard from "./BacktestingCard";
 import { Button } from "@/components/ui/button";
 import { ChartData } from "@/types/chat";
+import { exportChartDataCsv } from "@/lib/csv-export";
 
 interface AnalysisChartsProps {
   chartData?: ChartData | null;
@@ -51,19 +52,33 @@ const AnalysisCharts = ({
 
       {/* Chart Tabs */}
       {tabs.length > 1 && (
-        <div className="flex items-center gap-1 rounded-lg border border-border/30 bg-muted/30 p-1 w-fit">
-          {tabs.map(tab => (
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 rounded-lg border border-border/30 bg-muted/30 p-1 w-fit">
+            {tabs.map(tab => (
+              <Button
+                key={tab.id}
+                variant={activeTab === tab.id ? "secondary" : "ghost"}
+                size="sm"
+                className="h-7 px-3 text-xs gap-1.5"
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <tab.icon className="h-3 w-3" />
+                {tab.label}
+              </Button>
+            ))}
+          </div>
+          {chartData && (
             <Button
-              key={tab.id}
-              variant={activeTab === tab.id ? "secondary" : "ghost"}
+              variant="ghost"
               size="sm"
-              className="h-7 px-3 text-xs gap-1.5"
-              onClick={() => setActiveTab(tab.id)}
+              className="h-7 px-2.5 text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+              onClick={() => exportChartDataCsv(chartData, stockSymbol || undefined)}
+              title="Export chart data as CSV"
             >
-              <tab.icon className="h-3 w-3" />
-              {tab.label}
+              <FileDown className="h-3.5 w-3.5" />
+              CSV
             </Button>
-          ))}
+          )}
         </div>
       )}
 
