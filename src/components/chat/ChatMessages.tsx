@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Message } from "@/types/chat";
 import { useToast } from "@/hooks/use-toast";
 import AnalysisCharts from "@/components/charts/AnalysisCharts";
+import StockComparisonCard from "@/components/charts/StockComparisonCard";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import jsPDF from "jspdf";
