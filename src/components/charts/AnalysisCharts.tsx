@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BarChart3, CandlestickChart as CandlestickIcon, Activity, LineChart, FlaskConical } from "lucide-react";
+import { BarChart3, CandlestickChart as CandlestickIcon, Activity, LineChart, FlaskConical, FileDown } from "lucide-react";
 import CandlestickChart from "./CandlestickChart";
 import { RSIChart, MACDChart } from "./IndicatorCharts";
 import FundamentalsCard from "./FundamentalsCard";
@@ -7,6 +7,7 @@ import ConfidenceBadge from "./ConfidenceBadge";
 import BacktestingCard from "./BacktestingCard";
 import { Button } from "@/components/ui/button";
 import { ChartData } from "@/types/chat";
+import { exportChartDataCsv } from "@/lib/csv-export";
 
 interface AnalysisChartsProps {
   chartData?: ChartData | null;
