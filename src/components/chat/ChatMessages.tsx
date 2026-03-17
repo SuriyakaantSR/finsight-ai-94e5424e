@@ -165,6 +165,13 @@ const ChatMessages = ({ messages, isLoading }: ChatMessagesProps) => {
                   </div>
                 )}
 
+                {/* Comparison Panel */}
+                {message.role === "assistant" && message.comparisonData && (
+                  <div className="w-full mt-3">
+                    <StockComparisonCard comparisonData={message.comparisonData} />
+                  </div>
+                )}
+
                 {/* Message Controls (Assistant only) */}
                 {message.role === "assistant" && message.id !== "welcome" && (
                   <div
