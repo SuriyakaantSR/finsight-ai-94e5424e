@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
-import { TrendingUp, TrendingDown, BarChart3, Play, Settings2 } from "lucide-react";
+import { TrendingUp, TrendingDown, BarChart3, Play, Settings2, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { exportBacktestCsv } from "@/lib/csv-export";
 import { Slider } from "@/components/ui/slider";
 import {
   ResponsiveContainer,
