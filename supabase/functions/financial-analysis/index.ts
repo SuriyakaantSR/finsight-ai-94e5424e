@@ -19,7 +19,8 @@ const FINANCE_KEYWORDS = [
   "debt", "equity ratio", "book value", "intrinsic", "valuation", "pe",
   "pb ratio", "dividend yield", "bollinger", "fibonacci", "breakout",
   "consolidation", "bullish", "bearish", "overbought", "oversold",
-  "compare", "comparison", "vs", "versus"
+  "compare", "comparison", "vs", "versus", "atr", "adx", "vwap",
+  "risk", "reward", "stop loss", "target", "bollinger bands"
 ];
 
 function isFinanceRelated(query: string): boolean {
@@ -27,9 +28,18 @@ function isFinanceRelated(query: string): boolean {
   return FINANCE_KEYWORDS.some(keyword => lowerQuery.includes(keyword));
 }
 
+const timeSeriesSchema = {
+  type: "array",
+  items: {
+    type: "object",
+    properties: { date: { type: "string" }, value: { type: "number" } },
+    required: ["date", "value"]
+  }
+};
+
 const chartDataSchema = {
   type: "object",
-  description: "Chart visualization data",
+  description: "Chart visualization data with all technical indicators",
   properties: {
     ohlcv: {
       type: "array",
@@ -38,54 +48,53 @@ const chartDataSchema = {
         type: "object",
         properties: {
           date: { type: "string", description: "Date in YYYY-MM-DD format" },
-          open: { type: "number" },
-          high: { type: "number" },
-          low: { type: "number" },
-          close: { type: "number" },
-          volume: { type: "number" }
+          open: { type: "number" }, high: { type: "number" },
+          low: { type: "number" }, close: { type: "number" }, volume: { type: "number" }
         },
         required: ["date", "open", "high", "low", "close", "volume"]
       }
     },
-    rsi: {
-      type: "array",
-      description: "RSI(14) values for each trading day",
-      items: {
-        type: "object",
-        properties: { date: { type: "string" }, value: { type: "number" } },
-        required: ["date", "value"]
-      }
-    },
+    rsi: { ...timeSeriesSchema, description: "RSI(14) values" },
     macd: {
       type: "array",
-      description: "MACD values for each trading day",
+      description: "MACD values",
       items: {
         type: "object",
         properties: {
-          date: { type: "string" },
-          macd: { type: "number" },
-          signal: { type: "number" },
-          histogram: { type: "number" }
+          date: { type: "string" }, macd: { type: "number" },
+          signal: { type: "number" }, histogram: { type: "number" }
         },
         required: ["date", "macd", "signal", "histogram"]
       }
     },
-    sma20: {
+    sma20: { ...timeSeriesSchema, description: "20-day SMA values" },
+    sma50: { ...timeSeriesSchema, description: "50-day SMA values" },
+    ema20: { ...timeSeriesSchema, description: "20-day EMA values" },
+    ema50: { ...timeSeriesSchema, description: "50-day EMA values" },
+    vwap: { ...timeSeriesSchema, description: "VWAP values" },
+    bollingerBands: {
       type: "array",
-      description: "20-day SMA values",
+      description: "Bollinger Bands (20-day, 2 std dev)",
       items: {
         type: "object",
-        properties: { date: { type: "string" }, value: { type: "number" } },
-        required: ["date", "value"]
+        properties: {
+          date: { type: "string" }, upper: { type: "number" },
+          middle: { type: "number" }, lower: { type: "number" }
+        },
+        required: ["date", "upper", "middle", "lower"]
       }
     },
-    sma50: {
+    atr: { ...timeSeriesSchema, description: "ATR(14) values" },
+    adx: {
       type: "array",
-      description: "50-day SMA values",
+      description: "ADX/DI values",
       items: {
         type: "object",
-        properties: { date: { type: "string" }, value: { type: "number" } },
-        required: ["date", "value"]
+        properties: {
+          date: { type: "string" }, value: { type: "number" },
+          plusDI: { type: "number" }, minusDI: { type: "number" }
+        },
+        required: ["date", "value", "plusDI", "minusDI"]
       }
     }
   }
@@ -95,16 +104,24 @@ const fundamentalMetricsSchema = {
   type: "object",
   description: "Key fundamental metrics",
   properties: {
-    pe_ratio: { type: "number" },
-    eps: { type: "number" },
-    roe: { type: "number" },
-    roce: { type: "number" },
-    debt_to_equity: { type: "number" },
-    market_cap: { type: "string" },
-    revenue_growth: { type: "number" },
-    profit_margin: { type: "number" },
-    dividend_yield: { type: "number" },
-    book_value: { type: "number" }
+    pe_ratio: { type: "number" }, eps: { type: "number" },
+    roe: { type: "number" }, roce: { type: "number" },
+    debt_to_equity: { type: "number" }, market_cap: { type: "string" },
+    revenue_growth: { type: "number" }, profit_margin: { type: "number" },
+    dividend_yield: { type: "number" }, book_value: { type: "number" }
+  }
+};
+
+const riskRewardSchema = {
+  type: "object",
+  description: "Risk vs Reward analysis based on technical levels",
+  properties: {
+    riskRewardRatio: { type: "number", description: "Reward-to-risk ratio (e.g. 2.3 means 1:2.3)" },
+    stopLoss: { type: "number", description: "Suggested stop loss price level" },
+    targetPrice: { type: "number", description: "Suggested target price level" },
+    currentPrice: { type: "number", description: "Current/entry price" },
+    riskPercent: { type: "number", description: "Downside risk percentage" },
+    rewardPercent: { type: "number", description: "Upside reward percentage" }
   }
 };
 
@@ -118,8 +135,9 @@ CRITICAL RULES:
 5. Always include a disclaimer that this is for educational purposes only
 
 YOUR CAPABILITIES:
-- Technical Analysis: RSI, MACD, Moving Averages, Bollinger Bands, Support/Resistance, ATR, ADX, VWAP
+- Technical Analysis: RSI, MACD, SMA, EMA, Bollinger Bands, ATR, ADX, VWAP, Support/Resistance
 - Fundamental Analysis: P/E Ratio, EPS, Revenue Growth, ROE/ROCE, Debt Ratios, Market Cap
+- Risk/Reward Analysis: Stop loss levels, target prices, risk-reward ratios based on technical support/resistance
 - Historical Performance Analysis: 5-10 year trends, CAGR calculations
 - Multi-stock Comparisons: Side-by-side metric comparisons
 - Sector Analysis: Industry trends and peer benchmarking
@@ -133,8 +151,8 @@ RESPONSE FORMAT:
 - Always end with: "*Disclaimer: This analysis is for educational purposes only and does not constitute investment advice.*"
 
 TOOL USAGE:
-- When analyzing a SINGLE stock, use the stock_analysis_with_charts tool
-- When COMPARING two stocks (e.g. "compare X vs Y", "X versus Y"), use the stock_comparison tool to provide data for BOTH stocks
+- When analyzing a SINGLE stock, use the stock_analysis_with_charts tool. ALWAYS include ALL indicators: ohlcv, rsi, macd, sma20, sma50, ema20, ema50, bollingerBands, atr, adx, vwap, and risk_reward data.
+- When COMPARING two stocks (e.g. "compare X vs Y", "X versus Y"), use the stock_comparison tool
 - When answering general questions, respond with plain text`;
 
 serve(async (req) => {
@@ -159,7 +177,7 @@ serve(async (req) => {
     if (!isFinanceRelated(userMessage)) {
       return new Response(
         JSON.stringify({
-          content: "I apologize, but I'm specifically designed to assist with **Indian stock market analysis** only.\n\nI can help you with:\n• Stock analysis (TCS, RELIANCE, INFY, etc.)\n• Technical indicators (RSI, MACD, Moving Averages)\n• Fundamental metrics (P/E, EPS, Revenue)\n• Historical performance analysis\n• Multi-stock comparisons\n\nPlease ask a question related to NSE/BSE stocks, and I'll provide you with detailed educational insights.\n\n*This platform supports only stock market and financial queries.*",
+          content: "I apologize, but I'm specifically designed to assist with **Indian stock market analysis** only.\n\nI can help you with:\n• Stock analysis (TCS, RELIANCE, INFY, etc.)\n• Technical indicators (RSI, MACD, Bollinger Bands, ATR, ADX, VWAP)\n• Fundamental metrics (P/E, EPS, Revenue)\n• Risk/Reward analysis\n• Historical performance analysis\n• Multi-stock comparisons\n\nPlease ask a question related to NSE/BSE stocks, and I'll provide you with detailed educational insights.\n\n*This platform supports only stock market and financial queries.*",
           isFinanceRelated: false
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -195,7 +213,7 @@ serve(async (req) => {
           type: "function",
           function: {
             name: "stock_analysis_with_charts",
-            description: "Generate comprehensive stock analysis with chart data for visualization. Use this when analyzing a SINGLE specific stock.",
+            description: "Generate comprehensive stock analysis with ALL chart data and indicators for visualization. ALWAYS include all available indicators.",
             parameters: {
               type: "object",
               properties: {
@@ -203,6 +221,7 @@ serve(async (req) => {
                 stock_symbol: { type: "string", description: "Stock ticker symbol" },
                 chart_data: chartDataSchema,
                 fundamental_metrics: fundamentalMetricsSchema,
+                risk_reward: riskRewardSchema,
                 confidence_score: { type: "number", description: "Analysis confidence score 0-100" },
                 signal: { type: "string", enum: ["bullish", "bearish", "neutral"] }
               },
@@ -215,7 +234,7 @@ serve(async (req) => {
           type: "function",
           function: {
             name: "stock_comparison",
-            description: "Compare two stocks side-by-side with chart data and fundamental metrics for both. Use this when the user asks to compare two stocks (e.g. 'compare TCS vs INFY', 'RELIANCE versus HDFC').",
+            description: "Compare two stocks side-by-side with chart data and fundamental metrics for both.",
             parameters: {
               type: "object",
               properties: {
@@ -267,7 +286,6 @@ serve(async (req) => {
     const data = await response.json();
     const choice = data.choices?.[0];
 
-    // Handle tool call response
     if (choice?.message?.tool_calls?.length > 0) {
       const toolCall = choice.message.tool_calls[0];
       
@@ -315,6 +333,7 @@ serve(async (req) => {
               stockSymbol: args.stock_symbol || null,
               confidenceScore: args.confidence_score || null,
               signal: args.signal || null,
+              riskRewardData: args.risk_reward || null,
               isFinanceRelated: true
             }),
             { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
