@@ -18,11 +18,13 @@ I specialize exclusively in **Indian Stock Market (NSE/BSE)** analysis, providin
 
 ### What I Can Analyze
 
-- **Technical Analysis**: RSI, MACD, Moving Averages, Bollinger Bands, Support & Resistance
+- **Technical Analysis**: RSI, MACD, SMA, EMA, Bollinger Bands, ATR, ADX, VWAP
 - **Fundamental Analysis**: P/E Ratio, EPS, Revenue Growth, ROE/ROCE, Debt Ratios
+- **Risk/Reward Analysis**: Stop loss, target price, risk-reward ratios
 - **Historical Trends**: Multi-year performance, CAGR, price patterns
 - **Comparative Studies**: Peer comparison, sector analysis
-- **Interactive Charts**: Candlestick, RSI, MACD with dynamic visualizations
+- **Interactive Charts**: Candlestick, RSI, MACD, Bollinger, ADX, ATR
+- **Backtesting**: RSI-based strategy testing with equity curves
 
 ### Example Queries
 
@@ -162,6 +164,7 @@ const ChatLayout = () => {
         confidenceScore: data.confidenceScore || null,
         signal: data.signal || null,
         comparisonData: data.comparisonData || null,
+        riskRewardData: data.riskRewardData || null,
       };
 
       await supabase.from("chat_messages").insert({

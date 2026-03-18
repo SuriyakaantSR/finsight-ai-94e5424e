@@ -33,26 +33,110 @@ const ChatMessages = ({ messages, isLoading }: ChatMessagesProps) => {
     }
   };
 
-  const handleDownloadPDF = (content: string, messageId: string) => {
+  const handleDownloadPDF = (message: Message) => {
     const pdf = new jsPDF();
     const pageWidth = pdf.internal.pageSize.getWidth();
     const margin = 20;
     const maxWidth = pageWidth - margin * 2;
 
-    pdf.setFontSize(16);
+    // Header
+    pdf.setFontSize(18);
     pdf.setFont("helvetica", "bold");
-    pdf.text("FinSight AI - Stock Analysis", margin, 20);
-
+    pdf.setTextColor(16, 185, 129);
+    pdf.text("FinSight AI", margin, 20);
     pdf.setFontSize(10);
     pdf.setFont("helvetica", "normal");
     pdf.setTextColor(128, 128, 128);
-    pdf.text(`Generated: ${new Date().toLocaleString()}`, margin, 28);
+    pdf.text("AI-Powered Stock Market Analysis Report", margin, 27);
+
+    pdf.setDrawColor(16, 185, 129);
+    pdf.setLineWidth(0.5);
+    pdf.line(margin, 30, pageWidth - margin, 30);
+
+    pdf.setFontSize(9);
+    pdf.text(`Generated: ${new Date().toLocaleString()}`, margin, 36);
+    if (message.stockSymbol) {
+      pdf.text(`Stock: ${message.stockSymbol}`, margin + 80, 36);
+    }
     pdf.setFontSize(8);
-    pdf.text("Educational analysis only. Not investment advice.", margin, 34);
+    pdf.setTextColor(200, 100, 100);
+    pdf.text("DISCLAIMER: Educational analysis only. Not investment advice.", margin, 42);
     pdf.setTextColor(0, 0, 0);
 
-    let yPosition = 45;
+    let yPosition = 52;
     const lineHeight = 6;
+
+    // Confidence & Signal
+    if (message.confidenceScore || message.signal) {
+      pdf.setFontSize(11);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Analysis Summary", margin, yPosition);
+      yPosition += 8;
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      if (message.confidenceScore) {
+        pdf.text(`Confidence Score: ${message.confidenceScore}%`, margin, yPosition);
+        yPosition += lineHeight;
+      }
+      if (message.signal) {
+        pdf.text(`Signal: ${message.signal.toUpperCase()}`, margin, yPosition);
+        yPosition += lineHeight;
+      }
+      yPosition += 4;
+    }
+
+    // Risk/Reward
+    if (message.riskRewardData) {
+      const rr = message.riskRewardData;
+      pdf.setFontSize(11);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Risk/Reward Analysis", margin, yPosition);
+      yPosition += 8;
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      if (rr.riskRewardRatio) pdf.text(`Risk:Reward Ratio = 1:${rr.riskRewardRatio.toFixed(1)}`, margin, yPosition);
+      yPosition += lineHeight;
+      if (rr.currentPrice) pdf.text(`Entry Price: ₹${rr.currentPrice.toLocaleString("en-IN")}`, margin, yPosition);
+      yPosition += lineHeight;
+      if (rr.stopLoss) pdf.text(`Stop Loss: ₹${rr.stopLoss.toLocaleString("en-IN")} (-${rr.riskPercent?.toFixed(1)}%)`, margin, yPosition);
+      yPosition += lineHeight;
+      if (rr.targetPrice) pdf.text(`Target: ₹${rr.targetPrice.toLocaleString("en-IN")} (+${rr.rewardPercent?.toFixed(1)}%)`, margin, yPosition);
+      yPosition += lineHeight + 4;
+    }
+
+    // Fundamental Metrics
+    if (message.fundamentalMetrics) {
+      const fm = message.fundamentalMetrics;
+      pdf.setFontSize(11);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Fundamental Metrics", margin, yPosition);
+      yPosition += 8;
+      pdf.setFontSize(9);
+      pdf.setFont("helvetica", "normal");
+      const metrics = [
+        ["P/E Ratio", fm.pe_ratio], ["EPS", fm.eps], ["ROE", fm.roe, "%"], ["ROCE", fm.roce, "%"],
+        ["D/E Ratio", fm.debt_to_equity], ["Revenue Growth", fm.revenue_growth, "%"],
+        ["Profit Margin", fm.profit_margin, "%"], ["Dividend Yield", fm.dividend_yield, "%"],
+        ["Market Cap", fm.market_cap], ["Book Value", fm.book_value],
+      ];
+      metrics.forEach(([label, val, suffix]) => {
+        if (val !== undefined && val !== null) {
+          if (yPosition > pdf.internal.pageSize.getHeight() - 20) { pdf.addPage(); yPosition = 20; }
+          const displayVal = typeof val === "number" ? val.toFixed(2) : val;
+          pdf.text(`${label}: ${displayVal}${suffix || ""}`, margin, yPosition);
+          yPosition += lineHeight;
+        }
+      });
+      yPosition += 4;
+    }
+
+    // Main content
+    pdf.setFontSize(11);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Detailed Analysis", margin, yPosition);
+    yPosition += 8;
+
+    const content = message.content;
     const lines = content.split("\n");
 
     lines.forEach((line) => {
@@ -61,17 +145,17 @@ const ChatMessages = ({ messages, isLoading }: ChatMessagesProps) => {
         yPosition = 20;
       }
       if (line.startsWith("### ")) {
-        pdf.setFontSize(12);
+        pdf.setFontSize(11);
         pdf.setFont("helvetica", "bold");
         pdf.text(line.replace("### ", ""), margin, yPosition);
         yPosition += lineHeight + 2;
       } else if (line.startsWith("## ")) {
-        pdf.setFontSize(14);
+        pdf.setFontSize(13);
         pdf.setFont("helvetica", "bold");
         pdf.text(line.replace("## ", ""), margin, yPosition);
         yPosition += lineHeight + 3;
       } else if (line.startsWith("- ") || line.startsWith("• ")) {
-        pdf.setFontSize(10);
+        pdf.setFontSize(9);
         pdf.setFont("helvetica", "normal");
         const text = "• " + line.replace(/^[-•] /, "");
         const splitText = pdf.splitTextToSize(text, maxWidth - 10);
@@ -83,7 +167,7 @@ const ChatMessages = ({ messages, isLoading }: ChatMessagesProps) => {
       } else if (line.trim() === "") {
         yPosition += lineHeight / 2;
       } else {
-        pdf.setFontSize(10);
+        pdf.setFontSize(9);
         pdf.setFont("helvetica", "normal");
         const cleanedLine = line.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
         const splitText = pdf.splitTextToSize(cleanedLine, maxWidth);
@@ -95,16 +179,25 @@ const ChatMessages = ({ messages, isLoading }: ChatMessagesProps) => {
       }
     });
 
+    // Footer
     const pageCount = pdf.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       pdf.setPage(i);
-      pdf.setFontSize(8);
+      pdf.setFontSize(7);
       pdf.setTextColor(128, 128, 128);
-      pdf.text(`Page ${i} of ${pageCount} | FinSight AI`, pageWidth / 2, pdf.internal.pageSize.getHeight() - 10, { align: "center" });
+      pdf.text(
+        `Page ${i} of ${pageCount} | FinSight AI - Educational Analysis Only | ${new Date().toLocaleDateString()}`,
+        pageWidth / 2,
+        pdf.internal.pageSize.getHeight() - 10,
+        { align: "center" }
+      );
     }
 
-    pdf.save(`finsight-analysis-${messageId}.pdf`);
-    toast({ title: "PDF Downloaded", description: "Analysis exported as PDF successfully" });
+    const filename = message.stockSymbol
+      ? `FinSight-${message.stockSymbol}-Analysis.pdf`
+      : `FinSight-Analysis-${message.id}.pdf`;
+    pdf.save(filename);
+    toast({ title: "PDF Report Downloaded", description: "Full analysis report exported successfully" });
   };
 
   return (
@@ -117,7 +210,6 @@ const ChatMessages = ({ messages, isLoading }: ChatMessagesProps) => {
               className={`flex gap-3 sm:gap-4 animate-fade-in ${message.role === "user" ? "flex-row-reverse" : ""}`}
               style={{ animationDelay: index === messages.length - 1 ? "0.05s" : "0s" }}
             >
-              {/* Avatar */}
               <div
                 className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-sm ${
                   message.role === "assistant"
@@ -132,7 +224,6 @@ const ChatMessages = ({ messages, isLoading }: ChatMessagesProps) => {
                 )}
               </div>
 
-              {/* Message Content */}
               <div
                 className={`flex flex-col min-w-0 max-w-[92%] sm:max-w-[88%] ${
                   message.role === "user" ? "items-end" : "items-start"
@@ -161,6 +252,7 @@ const ChatMessages = ({ messages, isLoading }: ChatMessagesProps) => {
                       stockSymbol={message.stockSymbol}
                       confidenceScore={message.confidenceScore}
                       signal={message.signal}
+                      riskRewardData={message.riskRewardData}
                     />
                   </div>
                 )}
@@ -172,7 +264,7 @@ const ChatMessages = ({ messages, isLoading }: ChatMessagesProps) => {
                   </div>
                 )}
 
-                {/* Message Controls (Assistant only) */}
+                {/* Message Controls */}
                 {message.role === "assistant" && message.id !== "welcome" && (
                   <div
                     className="mt-1.5 flex items-center gap-0.5 opacity-0 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200"
@@ -183,7 +275,7 @@ const ChatMessages = ({ messages, isLoading }: ChatMessagesProps) => {
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground rounded-lg" onClick={() => handleCopy(message.content, message.id)} title="Copy text">
                       {copiedId === message.id ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground rounded-lg" onClick={() => handleDownloadPDF(message.content, message.id)} title="Export as PDF">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground rounded-lg" onClick={() => handleDownloadPDF(message)} title="Export full analysis as PDF">
                       <Download className="h-3.5 w-3.5" />
                     </Button>
                     <span className="ml-2 text-[11px] text-muted-foreground/70 tabular-nums">
@@ -195,7 +287,6 @@ const ChatMessages = ({ messages, isLoading }: ChatMessagesProps) => {
             </div>
           ))}
 
-          {/* Loading Indicator */}
           {isLoading && (
             <div className="flex gap-3 sm:gap-4 animate-fade-in">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/20">

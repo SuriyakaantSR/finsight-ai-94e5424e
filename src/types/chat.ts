@@ -25,6 +25,34 @@ export interface ChartData {
     date: string;
     value: number;
   }>;
+  ema20?: Array<{
+    date: string;
+    value: number;
+  }>;
+  ema50?: Array<{
+    date: string;
+    value: number;
+  }>;
+  bollingerBands?: Array<{
+    date: string;
+    upper: number;
+    middle: number;
+    lower: number;
+  }>;
+  atr?: Array<{
+    date: string;
+    value: number;
+  }>;
+  adx?: Array<{
+    date: string;
+    value: number;
+    plusDI: number;
+    minusDI: number;
+  }>;
+  vwap?: Array<{
+    date: string;
+    value: number;
+  }>;
 }
 
 export interface FundamentalMetrics {
@@ -38,6 +66,15 @@ export interface FundamentalMetrics {
   profit_margin?: number;
   dividend_yield?: number;
   book_value?: number;
+}
+
+export interface RiskRewardData {
+  riskRewardRatio?: number;
+  stopLoss?: number;
+  targetPrice?: number;
+  currentPrice?: number;
+  riskPercent?: number;
+  rewardPercent?: number;
 }
 
 export interface ComparisonStock {
@@ -63,6 +100,7 @@ export interface Message {
   confidenceScore?: number | null;
   signal?: "bullish" | "bearish" | "neutral" | null;
   comparisonData?: ComparisonData | null;
+  riskRewardData?: RiskRewardData | null;
 }
 
 export interface Conversation {

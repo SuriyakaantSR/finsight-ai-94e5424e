@@ -16,14 +16,25 @@ interface SMAData {
   value: number;
 }
 
+interface BollingerData {
+  date: string;
+  upper: number;
+  middle: number;
+  lower: number;
+}
+
 interface CandlestickChartProps {
   data: OHLCVData[];
   sma20?: SMAData[];
   sma50?: SMAData[];
+  ema20?: SMAData[];
+  ema50?: SMAData[];
+  vwap?: SMAData[];
+  bollingerBands?: BollingerData[];
   stockSymbol?: string;
 }
 
-const CandlestickChart = ({ data, sma20, sma50, stockSymbol }: CandlestickChartProps) => {
+const CandlestickChart = ({ data, sma20, sma50, ema20, ema50, vwap, bollingerBands, stockSymbol }: CandlestickChartProps) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const { resolvedTheme } = useTheme();
 
@@ -59,7 +70,6 @@ const CandlestickChart = ({ data, sma20, sma50, stockSymbol }: CandlestickChartP
       },
     });
 
-    // Candlestick series
     const candlestickSeries = chart.addCandlestickSeries({
       upColor: "#10b981",
       downColor: "#ef4444",
@@ -69,56 +79,66 @@ const CandlestickChart = ({ data, sma20, sma50, stockSymbol }: CandlestickChartP
       wickUpColor: "#10b981",
     });
 
-    const candleData = data.map(d => ({
+    candlestickSeries.setData(data.map(d => ({
       time: d.date as any,
       open: d.open,
       high: d.high,
       low: d.low,
       close: d.close,
-    }));
-    candlestickSeries.setData(candleData);
+    })));
 
-    // Volume series
+    // Volume
     const volumeSeries = chart.addHistogramSeries({
       priceFormat: { type: "volume" as any },
       priceScaleId: "volume",
     });
-
-    chart.priceScale("volume").applyOptions({
-      scaleMargins: { top: 0.85, bottom: 0 },
-    });
-
-    const volumeData = data.map(d => ({
+    chart.priceScale("volume").applyOptions({ scaleMargins: { top: 0.85, bottom: 0 } });
+    volumeSeries.setData(data.map(d => ({
       time: d.date as any,
       value: d.volume,
-      color: d.close >= d.open
-        ? "rgba(16, 185, 129, 0.3)"
-        : "rgba(239, 68, 68, 0.3)",
-    }));
-    volumeSeries.setData(volumeData);
+      color: d.close >= d.open ? "rgba(16, 185, 129, 0.3)" : "rgba(239, 68, 68, 0.3)",
+    })));
 
-    // SMA 20
-    if (sma20?.length) {
-      const sma20Series = chart.addLineSeries({
-        color: "#f59e0b",
+    // Overlay helpers
+    const addOverlay = (overlayData: SMAData[] | undefined, color: string) => {
+      if (!overlayData?.length) return;
+      const series = chart.addLineSeries({
+        color,
         lineWidth: 1,
         crosshairMarkerVisible: false,
         priceLineVisible: false,
         lastValueVisible: false,
       });
-      sma20Series.setData(sma20.map(d => ({ time: d.date as any, value: d.value })));
-    }
+      series.setData(overlayData.map(d => ({ time: d.date as any, value: d.value })));
+    };
 
-    // SMA 50
-    if (sma50?.length) {
-      const sma50Series = chart.addLineSeries({
-        color: "#8b5cf6",
+    addOverlay(sma20, "#f59e0b");
+    addOverlay(sma50, "#8b5cf6");
+    addOverlay(ema20, "#06b6d4");
+    addOverlay(ema50, "#ec4899");
+    addOverlay(vwap, "#6366f1");
+
+    // Bollinger Bands overlay
+    if (bollingerBands?.length) {
+      const upperSeries = chart.addLineSeries({
+        color: "rgba(139, 92, 246, 0.5)",
         lineWidth: 1,
         crosshairMarkerVisible: false,
         priceLineVisible: false,
         lastValueVisible: false,
+        lineStyle: 2,
       });
-      sma50Series.setData(sma50.map(d => ({ time: d.date as any, value: d.value })));
+      upperSeries.setData(bollingerBands.map(d => ({ time: d.date as any, value: d.upper })));
+
+      const lowerSeries = chart.addLineSeries({
+        color: "rgba(139, 92, 246, 0.5)",
+        lineWidth: 1,
+        crosshairMarkerVisible: false,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        lineStyle: 2,
+      });
+      lowerSeries.setData(bollingerBands.map(d => ({ time: d.date as any, value: d.lower })));
     }
 
     chart.timeScale().fitContent();
@@ -134,9 +154,18 @@ const CandlestickChart = ({ data, sma20, sma50, stockSymbol }: CandlestickChartP
       window.removeEventListener("resize", handleResize);
       chart.remove();
     };
-  }, [data, sma20, sma50, resolvedTheme]);
+  }, [data, sma20, sma50, ema20, ema50, vwap, bollingerBands, resolvedTheme]);
 
   if (!data?.length) return null;
+
+  const legends = [
+    { data: sma20, color: "#f59e0b", label: "SMA 20" },
+    { data: sma50, color: "#8b5cf6", label: "SMA 50" },
+    { data: ema20, color: "#06b6d4", label: "EMA 20" },
+    { data: ema50, color: "#ec4899", label: "EMA 50" },
+    { data: vwap, color: "#6366f1", label: "VWAP" },
+    { data: bollingerBands, color: "#8b5cf6", label: "BB" },
+  ].filter(l => l.data?.length);
 
   return (
     <div className="rounded-xl border border-border/50 bg-card/50 p-4">
@@ -145,19 +174,13 @@ const CandlestickChart = ({ data, sma20, sma50, stockSymbol }: CandlestickChartP
           <h4 className="text-sm font-semibold">{stockSymbol || "Stock"} Price Chart</h4>
           <span className="text-xs text-muted-foreground">OHLCV</span>
         </div>
-        <div className="flex items-center gap-3 text-[10px]">
-          {sma20?.length ? (
-            <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-[#f59e0b]" />
-              SMA 20
+        <div className="flex items-center gap-3 text-[10px] flex-wrap justify-end">
+          {legends.map(l => (
+            <span key={l.label} className="flex items-center gap-1">
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: l.color }} />
+              {l.label}
             </span>
-          ) : null}
-          {sma50?.length ? (
-            <span className="flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-[#8b5cf6]" />
-              SMA 50
-            </span>
-          ) : null}
+          ))}
         </div>
       </div>
       <div ref={chartContainerRef} />
