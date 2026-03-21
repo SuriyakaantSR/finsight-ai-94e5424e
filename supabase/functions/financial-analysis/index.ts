@@ -43,7 +43,8 @@ const chartDataSchema = {
   properties: {
     ohlcv: {
       type: "array",
-      description: "Last 60 trading days of OHLCV data based on realistic historical prices",
+      description: "CRITICAL: Generate EXACTLY 40 trading days of OHLCV data with realistic daily price progression. Start from approximately 40 trading days ago. Each day must have unique, realistic values with natural price movement.",
+      minItems: 40,
       items: {
         type: "object",
         properties: {
