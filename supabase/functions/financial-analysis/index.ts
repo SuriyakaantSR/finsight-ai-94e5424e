@@ -54,10 +54,10 @@ const chartDataSchema = {
         required: ["date", "open", "high", "low", "close", "volume"]
       }
     },
-    rsi: { ...timeSeriesSchema, description: "RSI(14) values for same 40 dates as ohlcv" },
+    rsi: { ...timeSeriesSchema, description: "RSI(14) values for same 20 dates as ohlcv" },
     macd: {
       type: "array",
-      description: "MACD values for same 40 dates as ohlcv",
+      description: "MACD values for same 20 dates as ohlcv",
       items: {
         type: "object",
         properties: {
@@ -67,14 +67,14 @@ const chartDataSchema = {
         required: ["date", "macd", "signal", "histogram"]
       }
     },
-    sma20: { ...timeSeriesSchema, description: "20-day SMA for same 40 dates" },
-    sma50: { ...timeSeriesSchema, description: "50-day SMA for same 40 dates" },
-    ema20: { ...timeSeriesSchema, description: "20-day EMA for same 40 dates" },
-    ema50: { ...timeSeriesSchema, description: "50-day EMA for same 40 dates" },
-    vwap: { ...timeSeriesSchema, description: "VWAP for same 40 dates" },
+    sma20: { ...timeSeriesSchema, description: "20-day SMA for same 20 dates" },
+    sma50: { ...timeSeriesSchema, description: "50-day SMA for same 20 dates" },
+    ema20: { ...timeSeriesSchema, description: "20-day EMA for same 20 dates" },
+    ema50: { ...timeSeriesSchema, description: "50-day EMA for same 20 dates" },
+    vwap: { ...timeSeriesSchema, description: "VWAP for same 20 dates" },
     bollingerBands: {
       type: "array",
-      description: "Bollinger Bands (20-day, 2 std dev) for same 40 dates",
+      description: "Bollinger Bands (20-day, 2 std dev) for same 20 dates",
       items: {
         type: "object",
         properties: {
@@ -84,10 +84,10 @@ const chartDataSchema = {
         required: ["date", "upper", "middle", "lower"]
       }
     },
-    atr: { ...timeSeriesSchema, description: "ATR(14) for same 40 dates" },
+    atr: { ...timeSeriesSchema, description: "ATR(14) for same 20 dates" },
     adx: {
       type: "array",
-      description: "ADX/DI values for same 40 dates",
+      description: "ADX/DI values for same 20 dates",
       items: {
         type: "object",
         properties: {
