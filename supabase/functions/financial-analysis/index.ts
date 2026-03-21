@@ -58,7 +58,7 @@ const chartDataSchema = {
     rsi: { ...timeSeriesSchema, description: "RSI(14) values for same 40 dates as ohlcv" },
     macd: {
       type: "array",
-      description: "MACD values",
+      description: "MACD values for same 40 dates as ohlcv",
       items: {
         type: "object",
         properties: {
