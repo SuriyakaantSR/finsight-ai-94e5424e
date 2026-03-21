@@ -152,8 +152,8 @@ RESPONSE FORMAT:
 
 TOOL USAGE:
 - When analyzing a SINGLE stock, use the stock_analysis_with_charts tool. ALWAYS include ALL indicators: ohlcv, rsi, macd, sma20, sma50, ema20, ema50, bollingerBands, atr, adx, vwap, and risk_reward data.
-- CRITICAL: Generate EXACTLY 40 data points for EVERY array (ohlcv, rsi, macd, sma20, sma50, ema20, ema50, bollingerBands, atr, adx, vwap). Use consecutive trading days. DO NOT generate only 3 data points.
-- When COMPARING two stocks (e.g. "compare X vs Y", "X versus Y"), use the stock_comparison tool. Generate at least 20 data points per array for each stock.
+- CRITICAL: Generate EXACTLY 20 data points for EVERY array (ohlcv, rsi, macd, sma20, sma50, ema20, ema50, bollingerBands, atr, adx, vwap). Use consecutive trading days. DO NOT generate only 3 data points — this breaks the charts.
+- When COMPARING two stocks, use the stock_comparison tool. Generate at least 15 data points per array for each stock.
 - When answering general questions, respond with plain text`;
 
 serve(async (req) => {
