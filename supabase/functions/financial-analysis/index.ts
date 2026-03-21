@@ -43,7 +43,7 @@ const chartDataSchema = {
   properties: {
     ohlcv: {
       type: "array",
-      description: "Last 60 trading days of OHLCV data based on realistic historical prices",
+      description: "Generate EXACTLY 20 trading days of OHLCV data with realistic daily price progression. Each day must have unique values with natural movement.",
       items: {
         type: "object",
         properties: {
@@ -54,10 +54,10 @@ const chartDataSchema = {
         required: ["date", "open", "high", "low", "close", "volume"]
       }
     },
-    rsi: { ...timeSeriesSchema, description: "RSI(14) values" },
+    rsi: { ...timeSeriesSchema, description: "RSI(14) values for same 20 dates as ohlcv" },
     macd: {
       type: "array",
-      description: "MACD values",
+      description: "MACD values for same 20 dates as ohlcv",
       items: {
         type: "object",
         properties: {
@@ -67,14 +67,14 @@ const chartDataSchema = {
         required: ["date", "macd", "signal", "histogram"]
       }
     },
-    sma20: { ...timeSeriesSchema, description: "20-day SMA values" },
-    sma50: { ...timeSeriesSchema, description: "50-day SMA values" },
-    ema20: { ...timeSeriesSchema, description: "20-day EMA values" },
-    ema50: { ...timeSeriesSchema, description: "50-day EMA values" },
-    vwap: { ...timeSeriesSchema, description: "VWAP values" },
+    sma20: { ...timeSeriesSchema, description: "20-day SMA for same 20 dates" },
+    sma50: { ...timeSeriesSchema, description: "50-day SMA for same 20 dates" },
+    ema20: { ...timeSeriesSchema, description: "20-day EMA for same 20 dates" },
+    ema50: { ...timeSeriesSchema, description: "50-day EMA for same 20 dates" },
+    vwap: { ...timeSeriesSchema, description: "VWAP for same 20 dates" },
     bollingerBands: {
       type: "array",
-      description: "Bollinger Bands (20-day, 2 std dev)",
+      description: "Bollinger Bands (20-day, 2 std dev) for same 20 dates",
       items: {
         type: "object",
         properties: {
@@ -84,10 +84,10 @@ const chartDataSchema = {
         required: ["date", "upper", "middle", "lower"]
       }
     },
-    atr: { ...timeSeriesSchema, description: "ATR(14) values" },
+    atr: { ...timeSeriesSchema, description: "ATR(14) for same 20 dates" },
     adx: {
       type: "array",
-      description: "ADX/DI values",
+      description: "ADX/DI values for same 20 dates",
       items: {
         type: "object",
         properties: {
@@ -152,7 +152,8 @@ RESPONSE FORMAT:
 
 TOOL USAGE:
 - When analyzing a SINGLE stock, use the stock_analysis_with_charts tool. ALWAYS include ALL indicators: ohlcv, rsi, macd, sma20, sma50, ema20, ema50, bollingerBands, atr, adx, vwap, and risk_reward data.
-- When COMPARING two stocks (e.g. "compare X vs Y", "X versus Y"), use the stock_comparison tool
+- CRITICAL: Generate EXACTLY 20 data points for EVERY array (ohlcv, rsi, macd, sma20, sma50, ema20, ema50, bollingerBands, atr, adx, vwap). Use consecutive trading days. DO NOT generate only 3 data points — this breaks the charts.
+- When COMPARING two stocks, use the stock_comparison tool. Generate at least 15 data points per array for each stock.
 - When answering general questions, respond with plain text`;
 
 serve(async (req) => {
