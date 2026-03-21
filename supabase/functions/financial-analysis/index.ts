@@ -85,10 +85,10 @@ const chartDataSchema = {
         required: ["date", "upper", "middle", "lower"]
       }
     },
-    atr: { ...timeSeriesSchema, description: "ATR(14) values" },
+    atr: { ...timeSeriesSchema, description: "ATR(14) for same 40 dates" },
     adx: {
       type: "array",
-      description: "ADX/DI values",
+      description: "ADX/DI values for same 40 dates",
       items: {
         type: "object",
         properties: {
