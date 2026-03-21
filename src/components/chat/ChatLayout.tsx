@@ -8,6 +8,8 @@ import ChatInput from "./ChatInput";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Message, Conversation } from "@/types/chat";
+import { useWatchlist } from "@/hooks/useWatchlist";
+import { useAlerts } from "@/hooks/useAlerts";
 
 const WELCOME_MESSAGE: Message = {
   id: "welcome",
@@ -44,6 +46,9 @@ const ChatLayout = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const { items: watchlistItems, addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
+  const { alerts, createAlert, deleteAlert, toggleAlert, checkAlerts } = useAlerts();
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -98,6 +103,11 @@ const ChatLayout = () => {
   const clearConversation = () => {
     setMessages([WELCOME_MESSAGE]);
     setCurrentConversationId(null);
+  };
+
+  const handleAnalyzeFromWatchlist = (symbol: string) => {
+    handleSendMessage(`Analyze ${symbol} with all technical indicators and risk/reward`);
+    setIsSidebarOpen(false);
   };
 
   const handleSendMessage = async (content: string) => {
@@ -165,6 +175,23 @@ const ChatLayout = () => {
         riskRewardData: data.riskRewardData || null,
       };
 
+      // Check alerts against new data
+      if (data.stockSymbol && data.chartData) {
+        const latestRsi = data.chartData.rsi?.slice(-1)[0]?.value;
+        const latestMacd = data.chartData.macd?.slice(-1)[0]?.macd;
+        const latestAdx = data.chartData.adx?.slice(-1)[0]?.value;
+        const latestAtr = data.chartData.atr?.slice(-1)[0]?.value;
+
+        const triggered = checkAlerts(data.stockSymbol, {
+          rsi: latestRsi, macd: latestMacd, adx: latestAdx, atr: latestAtr,
+        });
+
+        if (triggered.length > 0) {
+          const alertText = triggered.map(a => `⚠️ **Alert**: ${a.symbol} ${a.indicator} is ${a.condition} ${a.threshold}`).join("\n");
+          assistantMessage.content = `${alertText}\n\n---\n\n${assistantMessage.content}`;
+        }
+      }
+
       await supabase.from("chat_messages").insert({
         conversation_id: conversationId,
         role: "assistant",
@@ -219,6 +246,12 @@ const ChatLayout = () => {
         onNewConversation={startNewConversation}
         onSelectConversation={loadConversation}
         onClearConversation={clearConversation}
+        watchlistItems={watchlistItems}
+        onAnalyzeStock={handleAnalyzeFromWatchlist}
+        onRemoveFromWatchlist={removeFromWatchlist}
+        alerts={alerts}
+        onDeleteAlert={deleteAlert}
+        onToggleAlert={toggleAlert}
       />
 
       <div className="flex flex-1 flex-col min-w-0">
@@ -226,7 +259,13 @@ const ChatLayout = () => {
           onMenuClick={() => setIsSidebarOpen(true)}
           userName={user?.user_metadata?.full_name || user?.email?.split("@")[0]}
         />
-        <ChatMessages messages={messages} isLoading={isLoading} />
+        <ChatMessages
+          messages={messages}
+          isLoading={isLoading}
+          onAddToWatchlist={addToWatchlist}
+          isInWatchlist={isInWatchlist}
+          onCreateAlert={createAlert}
+        />
         <ChatInput onSend={handleSendMessage} isLoading={isLoading} />
       </div>
     </div>
