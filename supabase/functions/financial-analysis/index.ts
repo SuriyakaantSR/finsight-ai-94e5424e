@@ -55,7 +55,7 @@ const chartDataSchema = {
         required: ["date", "open", "high", "low", "close", "volume"]
       }
     },
-    rsi: { ...timeSeriesSchema, description: "RSI(14) values" },
+    rsi: { ...timeSeriesSchema, description: "RSI(14) values for same 40 dates as ohlcv" },
     macd: {
       type: "array",
       description: "MACD values",
