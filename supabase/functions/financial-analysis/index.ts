@@ -75,7 +75,7 @@ const chartDataSchema = {
     vwap: { ...timeSeriesSchema, description: "VWAP for same 40 dates" },
     bollingerBands: {
       type: "array",
-      description: "Bollinger Bands (20-day, 2 std dev)",
+      description: "Bollinger Bands (20-day, 2 std dev) for same 40 dates",
       items: {
         type: "object",
         properties: {
