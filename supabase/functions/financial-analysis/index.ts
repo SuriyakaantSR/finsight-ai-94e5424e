@@ -68,11 +68,11 @@ const chartDataSchema = {
         required: ["date", "macd", "signal", "histogram"]
       }
     },
-    sma20: { ...timeSeriesSchema, description: "20-day SMA values" },
-    sma50: { ...timeSeriesSchema, description: "50-day SMA values" },
-    ema20: { ...timeSeriesSchema, description: "20-day EMA values" },
-    ema50: { ...timeSeriesSchema, description: "50-day EMA values" },
-    vwap: { ...timeSeriesSchema, description: "VWAP values" },
+    sma20: { ...timeSeriesSchema, description: "20-day SMA for same 40 dates" },
+    sma50: { ...timeSeriesSchema, description: "50-day SMA for same 40 dates" },
+    ema20: { ...timeSeriesSchema, description: "20-day EMA for same 40 dates" },
+    ema50: { ...timeSeriesSchema, description: "50-day EMA for same 40 dates" },
+    vwap: { ...timeSeriesSchema, description: "VWAP for same 40 dates" },
     bollingerBands: {
       type: "array",
       description: "Bollinger Bands (20-day, 2 std dev)",
