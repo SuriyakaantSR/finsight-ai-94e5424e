@@ -70,6 +70,42 @@ export type Database = {
           },
         ]
       }
+      indicator_alerts: {
+        Row: {
+          condition: string
+          created_at: string
+          id: string
+          indicator: string
+          is_active: boolean
+          last_triggered_at: string | null
+          symbol: string
+          threshold: number
+          user_id: string
+        }
+        Insert: {
+          condition: string
+          created_at?: string
+          id?: string
+          indicator: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          symbol: string
+          threshold: number
+          user_id: string
+        }
+        Update: {
+          condition?: string
+          created_at?: string
+          id?: string
+          indicator?: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          symbol?: string
+          threshold?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -93,6 +129,36 @@ export type Database = {
           display_name?: string | null
           id?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      watchlist: {
+        Row: {
+          added_at: string
+          id: string
+          last_confidence: number | null
+          last_signal: string | null
+          notes: string | null
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          last_confidence?: number | null
+          last_signal?: string | null
+          notes?: string | null
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          last_confidence?: number | null
+          last_signal?: string | null
+          notes?: string | null
+          symbol?: string
           user_id?: string
         }
         Relationships: []
