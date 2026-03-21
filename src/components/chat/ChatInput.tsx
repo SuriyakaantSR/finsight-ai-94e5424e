@@ -8,10 +8,10 @@ interface ChatInputProps {
 }
 
 const SUGGESTED_QUERIES = [
-  "Analyze TCS fundamentals",
-  "Technical analysis for RELIANCE",
-  "Compare INFY vs WIPRO",
-  "HDFC Bank 5-year trend",
+  "Analyze TCS with all technical indicators and risk/reward",
+  "Compare RELIANCE vs INFY fundamentals and charts",
+  "Bollinger Bands and ADX analysis for HDFCBANK",
+  "WIPRO technical analysis with ATR and VWAP",
 ];
 
 const ChatInput = ({ onSend, isLoading }: ChatInputProps) => {

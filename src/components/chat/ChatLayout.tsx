@@ -18,19 +18,17 @@ I specialize exclusively in **Indian Stock Market (NSE/BSE)** analysis, providin
 
 ### What I Can Analyze
 
-- **Technical Analysis**: RSI, MACD, SMA, EMA, Bollinger Bands, ATR, ADX, VWAP
+- **Technical Analysis**: RSI, MACD, SMA, EMA, Bollinger Bands, ATR, ADX, VWAP — with interactive charts
 - **Fundamental Analysis**: P/E Ratio, EPS, Revenue Growth, ROE/ROCE, Debt Ratios
-- **Risk/Reward Analysis**: Stop loss, target price, risk-reward ratios
-- **Historical Trends**: Multi-year performance, CAGR, price patterns
-- **Comparative Studies**: Peer comparison, sector analysis
-- **Interactive Charts**: Candlestick, RSI, MACD, Bollinger, ADX, ATR
+- **Risk/Reward Analysis**: Stop loss, target price, risk-reward ratios with visual graphs
+- **Comparative Studies**: Side-by-side peer comparison with normalized price charts
 - **Backtesting**: RSI-based strategy testing with equity curves
+- **PDF Reports**: Export full analysis reports with one click
+- **CSV Export**: Download raw chart data for your own analysis
 
-### Example Queries
+### Try These Now 👇
 
-- "Analyze TCS using last 5 years data"
-- "Compare RELIANCE vs INFY fundamentals"
-- "What are the technical indicators for HDFCBANK?"
+Click any suggestion below to see FinSight AI in action — charts, signals, and insights will appear instantly.
 
 *All insights are educational and based on historical data. Not investment advice.*`,
   timestamp: new Date(),
