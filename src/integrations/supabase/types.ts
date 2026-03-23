@@ -106,6 +106,42 @@ export type Database = {
         }
         Relationships: []
       }
+      portfolio_trades: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          price: number
+          quantity: number
+          symbol: string
+          trade_date: string
+          trade_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          price: number
+          quantity: number
+          symbol: string
+          trade_date?: string
+          trade_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          price?: number
+          quantity?: number
+          symbol?: string
+          trade_date?: string
+          trade_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
