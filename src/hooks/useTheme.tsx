@@ -13,12 +13,12 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window !== "undefined") {
-      return (localStorage.getItem("theme") as Theme) || "dark";
+      return (localStorage.getItem("theme") as Theme) || "light";
     }
-    return "dark";
+    return "light";
   });
 
-  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("dark");
+  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -37,10 +37,10 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
       setResolvedTheme(resolved);
       root.classList.remove("light", "dark");
       
-      if (resolved === "light") {
-        root.classList.add("light");
+      if (resolved === "dark") {
+        root.classList.add("dark");
       }
-      // Dark is the default, so we don't need to add the class
+      // Light is the default, so we don't need to add the class
     };
 
     updateTheme();
