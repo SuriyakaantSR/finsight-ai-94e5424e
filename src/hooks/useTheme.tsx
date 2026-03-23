@@ -37,10 +37,10 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
       setResolvedTheme(resolved);
       root.classList.remove("light", "dark");
       
-      if (resolved === "light") {
-        root.classList.add("light");
+      if (resolved === "dark") {
+        root.classList.add("dark");
       }
-      // Dark is the default, so we don't need to add the class
+      // Light is the default, so we don't need to add the class
     };
 
     updateTheme();
