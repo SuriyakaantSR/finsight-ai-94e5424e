@@ -5,11 +5,13 @@ import ChatSidebar from "./ChatSidebar";
 import ChatHeader from "./ChatHeader";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
+import PortfolioDialog from "./PortfolioDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Message, Conversation } from "@/types/chat";
 import { useWatchlist } from "@/hooks/useWatchlist";
 import { useAlerts } from "@/hooks/useAlerts";
+import { usePortfolio } from "@/hooks/usePortfolio";
 
 const WELCOME_MESSAGE: Message = {
   id: "welcome",
@@ -46,14 +48,14 @@ const ChatLayout = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [portfolioDialogOpen, setPortfolioDialogOpen] = useState(false);
 
   const { items: watchlistItems, addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
   const { alerts, createAlert, deleteAlert, toggleAlert, checkAlerts } = useAlerts();
+  const { holdings: portfolioHoldings, totalInvested, addTrade } = usePortfolio();
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/login");
-    }
+    if (!authLoading && !user) navigate("/login");
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
@@ -128,10 +130,7 @@ const ChatLayout = () => {
       if (!conversationId) {
         const { data: newConv, error: convError } = await supabase
           .from("chat_conversations")
-          .insert({
-            user_id: user.id,
-            title: content.trim().substring(0, 50) + (content.length > 50 ? "..." : ""),
-          })
+          .insert({ user_id: user.id, title: content.trim().substring(0, 50) + (content.length > 50 ? "..." : "") })
           .select()
           .single();
 
@@ -140,21 +139,12 @@ const ChatLayout = () => {
         setCurrentConversationId(conversationId);
       }
 
-      await supabase.from("chat_messages").insert({
-        conversation_id: conversationId,
-        role: "user",
-        content: content.trim(),
-      });
+      await supabase.from("chat_messages").insert({ conversation_id: conversationId, role: "user", content: content.trim() });
 
-      const conversationHistory = messages
-        .filter((m) => m.id !== "welcome")
-        .map((m) => ({ role: m.role, content: m.content }));
+      const conversationHistory = messages.filter((m) => m.id !== "welcome").map((m) => ({ role: m.role, content: m.content }));
 
       const { data, error } = await supabase.functions.invoke("financial-analysis", {
-        body: {
-          messages: [...conversationHistory, { role: "user", content: content.trim() }],
-          conversationHistory,
-        },
+        body: { messages: [...conversationHistory, { role: "user", content: content.trim() }], conversationHistory },
       });
 
       if (error) throw new Error(error.message);
@@ -175,16 +165,13 @@ const ChatLayout = () => {
         riskRewardData: data.riskRewardData || null,
       };
 
-      // Check alerts against new data
       if (data.stockSymbol && data.chartData) {
         const latestRsi = data.chartData.rsi?.slice(-1)[0]?.value;
         const latestMacd = data.chartData.macd?.slice(-1)[0]?.macd;
         const latestAdx = data.chartData.adx?.slice(-1)[0]?.value;
         const latestAtr = data.chartData.atr?.slice(-1)[0]?.value;
 
-        const triggered = checkAlerts(data.stockSymbol, {
-          rsi: latestRsi, macd: latestMacd, adx: latestAdx, atr: latestAtr,
-        });
+        const triggered = checkAlerts(data.stockSymbol, { rsi: latestRsi, macd: latestMacd, adx: latestAdx, atr: latestAtr });
 
         if (triggered.length > 0) {
           const alertText = triggered.map(a => `⚠️ **Alert**: ${a.symbol} ${a.indicator} is ${a.condition} ${a.threshold}`).join("\n");
@@ -192,34 +179,20 @@ const ChatLayout = () => {
         }
       }
 
-      await supabase.from("chat_messages").insert({
-        conversation_id: conversationId,
-        role: "assistant",
-        content: assistantContent,
-      });
-
-      await supabase
-        .from("chat_conversations")
-        .update({ updated_at: new Date().toISOString() })
-        .eq("id", conversationId);
+      await supabase.from("chat_messages").insert({ conversation_id: conversationId, role: "assistant", content: assistantContent });
+      await supabase.from("chat_conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId);
 
       setMessages((prev) => [...prev, assistantMessage]);
       loadConversations();
     } catch (error) {
       console.error("Analysis error:", error);
-      toast({
-        title: "Analysis Error",
-        description: "Failed to get analysis. Please try again.",
-        variant: "destructive",
-      });
-
-      const errorMessage: Message = {
+      toast({ title: "Analysis Error", description: "Failed to get analysis. Please try again.", variant: "destructive" });
+      setMessages((prev) => [...prev, {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content: "I'm experiencing technical difficulties. Please try again in a moment.\n\n*Ensure your question relates to Indian stock market analysis.*",
         timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      }]);
     } finally {
       setIsLoading(false);
     }
@@ -252,22 +225,18 @@ const ChatLayout = () => {
         alerts={alerts}
         onDeleteAlert={deleteAlert}
         onToggleAlert={toggleAlert}
+        portfolioHoldings={portfolioHoldings}
+        totalInvested={totalInvested}
+        onOpenPortfolioDialog={() => setPortfolioDialogOpen(true)}
       />
 
       <div className="flex flex-1 flex-col min-w-0">
-        <ChatHeader
-          onMenuClick={() => setIsSidebarOpen(true)}
-          userName={user?.user_metadata?.full_name || user?.email?.split("@")[0]}
-        />
-        <ChatMessages
-          messages={messages}
-          isLoading={isLoading}
-          onAddToWatchlist={addToWatchlist}
-          isInWatchlist={isInWatchlist}
-          onCreateAlert={createAlert}
-        />
+        <ChatHeader onMenuClick={() => setIsSidebarOpen(true)} userName={user?.user_metadata?.full_name || user?.email?.split("@")[0]} />
+        <ChatMessages messages={messages} isLoading={isLoading} onAddToWatchlist={addToWatchlist} isInWatchlist={isInWatchlist} onCreateAlert={createAlert} />
         <ChatInput onSend={handleSendMessage} isLoading={isLoading} />
       </div>
+
+      <PortfolioDialog open={portfolioDialogOpen} onOpenChange={setPortfolioDialogOpen} onAddTrade={addTrade} />
     </div>
   );
 };
